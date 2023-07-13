@@ -1,9 +1,18 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { StyleSheet, View, Text, TouchableOpacity, Dimensions } from 'react-native';
 import { check, PERMISSIONS, RESULTS, request, openSettings } from 'react-native-permissions';
 import Voice from '@react-native-community/voice';
+import { useSelector } from 'react-redux';
+import axios from 'axios';
+const rootUrl = 'https://q-rious.fr'; // Remplacez par votre URL racine
 
-export default function App() {
+const Audio = () => {
+  const token = useSelector((state) => state.token);
+  const headers = {
+    'Content-Type': 'application/json',
+    'Authorization': `Bearer ${token}`
+  };
+
   const [isListening, setIsListening] = useState(false);
   const [transcription, setTranscription] = useState('');
   const [backgroundColor, setBackgroundColor] = useState('#fff');
@@ -11,7 +20,7 @@ export default function App() {
   const [buttonX, setButtonX] = useState(0);
   const [buttonY, setButtonY] = useState(0);
 
-  const commands: { [key: string]: () => void } = {
+  const commands = {
     'bonjour': () => {
       if (!isColorChanged) {
         const colors = ['#f00', '#0f0', '#00f', '#ff0', '#f0f', '#0ff'];
@@ -85,43 +94,42 @@ export default function App() {
       console.error(e);
     }
   };
-  
-  function levenshteinDistance(a: string, b: string) {
-        const matrix = [];
-  
+
+  function levenshteinDistance(a, b) {
+    const matrix = [];
+
     // Increment along the first column of each row
-    for(let i = 0; i <= b.length; i++){
+    for (let i = 0; i <= b.length; i++) {
       matrix[i] = [i];
     }
-  
+
     // Increment each column in the first row
-    for(let j = 0; j <= a.length; j++){
+    for (let j = 0; j <= a.length; j++) {
       matrix[0][j] = j;
     }
-  
+
     // Fill in the rest of the matrix
-    for(let i = 1; i <= b.length; i++){
-      for(let j = 1; j <= a.length; j++){
-        if(b.charAt(i-1) == a.charAt(j-1)){
-          matrix[i][j] = matrix[i-1][j-1];
+    for (let i = 1; i <= b.length; i++) {
+      for (let j = 1; j <= a.length; j++) {
+        if (b.charAt(i - 1) == a.charAt(j - 1)) {
+          matrix[i][j] = matrix[i - 1][j - 1];
         } else {
-          matrix[i][j] = Math.min(matrix[i-1][j-1] + 1, Math.min(matrix[i][j-1] + 1, matrix[i-1][j] + 1));
+          matrix[i][j] = Math.min(matrix[i - 1][j - 1] + 1, Math.min(matrix[i][j - 1] + 1, matrix[i - 1][j] + 1));
         }
       }
     }
-  
+
     return matrix[b.length][a.length];
   }
-  
 
   Voice.onSpeechResults = (e) => {
     let speech = e.value ? e.value.join(' ') : '';
-  
+
     // Filtrage du discours
     speech = speech.trim(); // Supprimer les espaces avant et après
     speech = speech.replace(/\s+/g, ' '); // Supprimer les espaces multiples
     speech = speech.toLowerCase(); // Convertir en minuscules pour faciliter la correspondance des commandes
-  
+
     // Garder seulement le premier mot de chaque séquence de mots similaires
     const words = speech.split(' ');
     const filteredWords = words.filter((word, index, self) => {
@@ -129,20 +137,47 @@ export default function App() {
       return index === self.findIndex(otherWord => levenshteinDistance(word, otherWord) / Math.max(word.length, otherWord.length) <= 0.5);
     });
     speech = filteredWords.join(' ');
-  
+
     setTranscription(speech);
-  
+
     const commandFunc = commands[speech];
     if (commandFunc) {
       commandFunc();
     }
   };
 
-  
-  
-  
-  
-  
+  const styles = StyleSheet.create({
+    container: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    button: {
+      position: 'absolute',
+      backgroundColor: '#007AFF',
+      padding: 10,
+      borderRadius: 5,
+    },
+    buttonText: {
+      color: '#FFF',
+      fontSize: 18,
+    },
+    voiceButton: {
+      backgroundColor: '#007AFF',
+      padding: 10,
+      borderRadius: 5,
+      marginBottom: 20,
+    },
+    voiceButtonText: {
+      color: '#FFF',
+      fontSize: 18,
+    },
+    transcription: {
+      fontSize: 16,
+      textAlign: 'center',
+    },
+  });
+
   return (
     <View style={[styles.container, { backgroundColor: backgroundColor }]}>
       <TouchableOpacity
@@ -162,36 +197,6 @@ export default function App() {
       <Text style={styles.transcription}>{transcription}</Text>
     </View>
   );
-}
+};
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  button: {
-    position: 'absolute',
-    backgroundColor: '#007AFF',
-    padding: 10,
-    borderRadius: 5,
-  },
-  buttonText: {
-    color: '#FFF',
-    fontSize: 18,
-  },
-  voiceButton: {
-    backgroundColor: '#007AFF',
-    padding: 10,
-    borderRadius: 5,
-    marginBottom: 20,
-  },
-  voiceButtonText: {
-    color: '#FFF',
-    fontSize: 18,
-  },
-  transcription: {
-    fontSize: 16,
-    textAlign: 'center',
-  },
-});
+export default Audio;
