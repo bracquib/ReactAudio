@@ -146,29 +146,29 @@ const handleUpdateActivity = async (activityId) => {
 };
   
 
-  const handleCreatePost = async () => { // Ajouté
-    try {
-      if (!newPostContent || !newPostContent.trim()) {
-        throw new Error(`New post content is empty`);
-      }
-
-      await axios.post(
-        `https://q-rious.fr/wp-json/buddyboss/v1/activity`,
-        { 
-          content: newPostContent, 
-          component: 'activity', 
-          type: 'activity_update' 
-        },
-        { headers }
-      );
-      Alert.alert('Success', 'Activity created successfully.');
-      setNewPostContent('');
-      fetchActivities();
-    } catch (error) {
-      Alert.alert('Error', 'Failed to create activity. Please try again.');
-      console.error(error);
+const handleCreatePost = async (content) => {
+  try {
+    if (!content || !content.trim()) {
+      throw new Error('New post content is empty');
     }
-  }; // Fin ajouté
+
+    await axios.post(
+      `https://q-rious.fr/wp-json/buddyboss/v1/activity`,
+      {
+        content: content,
+        component: 'activity',
+        type: 'activity_update'
+      },
+      { headers }
+    );
+    Alert.alert('Success', 'Activity created successfully.');
+    fetchActivities();
+  } catch (error) {
+    console.error(error);
+    Alert.alert('Error', 'Failed to create activity. Please try again.');
+  }
+};
+
 
   if (isLoading) {
     return <ActivityIndicator size="large" color="#0000ff" />;
@@ -186,7 +186,7 @@ const handleUpdateActivity = async (activityId) => {
         value={newPostContent}
         placeholder="New post content"
       />
-      <Button title="Create activity" onPress={handleCreatePost} />
+      <Button title="Create activity" onPress={() =>handleCreatePost(newPostContent)} />
                <FlatList
         data={data}
         keyExtractor={(item) => item.id.toString()}

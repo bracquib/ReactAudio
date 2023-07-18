@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect,useRef} from 'react';
 import { StyleSheet, View, Text, TouchableOpacity, Dimensions } from 'react-native';
 import { check, PERMISSIONS, RESULTS, request, openSettings } from 'react-native-permissions';
 import Voice from '@react-native-community/voice';
@@ -19,8 +19,21 @@ const Audio = () => {
   const [isColorChanged, setIsColorChanged] = useState(false);
   const [buttonX, setButtonX] = useState(0);
   const [buttonY, setButtonY] = useState(0);
-
+  const [activityCreating, setActivityCreating] = useState(false);
+  const [activityContent, setActivityContent] = useState('');
+  const [isCommandExecuting, setIsCommandExecuting] = useState(false);
+  const activityCreatingRef = useRef(false);
   const commands = {
+    'créer activité': () => {
+      if (!activityCreatingRef.current) {
+        setActivityCreating(true);
+        activityCreatingRef.current = true;
+        console.log('Creating activity2 dans command:', activityCreatingRef.current);
+      
+        console.log('Creating activity dans command:', activityCreating);
+
+      }
+    },
     'bonjour': () => {
       if (!isColorChanged) {
         const colors = ['#f00', '#0f0', '#00f', '#ff0', '#f0f', '#0ff'];
@@ -32,6 +45,17 @@ const Audio = () => {
     'test': () => {
       moveButton();
     },
+  };
+
+  useEffect(() => {
+    console.log('Creating activity has changed to:', activityCreating);
+    console.log('Creating activity2 has changed to:', activityCreatingRef.current);
+  }, [activityCreating]);
+  
+  const executeCommand = (command) => {
+    setIsCommandExecuting(true);
+    command();
+    setIsCommandExecuting(false);
   };
 
   const moveButton = () => {
@@ -137,13 +161,26 @@ const Audio = () => {
       return index === self.findIndex(otherWord => levenshteinDistance(word, otherWord) / Math.max(word.length, otherWord.length) <= 0.5);
     });
     speech = filteredWords.join(' ');
+    console.log('activitycreating dans result avant condi :', activityCreating);
 
+    if (activityCreatingRef.current) {
+      console.log('activitycreating est vrai dans result  :', activityContent);
+      console.log('activityCreating2 est vrai dans result');
+      setActivityContent(speech);
+      console.log('Content  :', activityContent);
+      console.log('Creating activity dans result :', activityCreating);
+      setActivityCreating(false);
+      console.log('Creating activity dans result 2:', activityCreating);
+
+    }
     setTranscription(speech);
 
-    const commandFunc = commands[speech];
-    if (commandFunc) {
-      commandFunc();
-    }
+
+      const commandFunc = commands[speech];
+      if (commandFunc) {
+        executeCommand(commandFunc);
+      }
+
   };
 
   const styles = StyleSheet.create({
@@ -172,29 +209,50 @@ const Audio = () => {
       color: '#FFF',
       fontSize: 18,
     },
-    transcription: {
-      fontSize: 16,
+    text: {
       textAlign: 'center',
+      color: '#333333',
+      marginBottom: 5,
+    },
+    transcription: {
+      textAlign: 'center',
+      color: '#333333',
+      marginBottom: 5,
+      fontSize: 18,
+    },
+    activity: {
+      textAlign: 'center',
+      color: '#333333',
+      marginBottom: 5,
+      fontSize: 18,
     },
   });
 
   return (
-    <View style={[styles.container, { backgroundColor: backgroundColor }]}>
+    <View style={[styles.container, { backgroundColor }]}>
+      <Text style={styles.text}>Dictée vocale</Text>
       <TouchableOpacity
-        style={[styles.button, { left: buttonX, top: buttonY }]} // Utilisez les coordonnées X et Y pour définir la position du bouton
-        onPress={moveButton} // Vous pouvez également déplacer le bouton en appuyant dessus
+        style={[styles.button, { top: buttonY, left: buttonX }]}
+        onPress={moveButton}
       >
-        <Text style={styles.buttonText}>Test</Text>
+        <Text style={styles.buttonText}>Move me</Text>
       </TouchableOpacity>
-
       <TouchableOpacity
         style={styles.voiceButton}
-        onPress={isListening ? stopListening : checkPermissionAndStart}
+        onPress={() => {
+          if (isListening) {
+            stopListening();
+          } else {
+            checkPermissionAndStart();
+          }
+        }}
       >
-        <Text style={styles.voiceButtonText}>{isListening ? 'Stop' : 'Start'}</Text>
+         <Text style={styles.voiceButtonText}>{isListening ? 'Arrêter' : 'Démarrer'}</Text>
       </TouchableOpacity>
-
-      <Text style={styles.transcription}>{transcription}</Text>
+      {activityCreating && <Text style={styles.transcription}>Veuillez prononcer le contenu de l'activité.</Text>}
+      <Text style={styles.transcription}>{`Transcription : ${transcription}`}</Text>
+      <Text style={styles.activity}>{`Création d'activité: ${activityCreating ? 'True ' : 'False'}`}</Text>
+      <Text style={styles.transcription}>{`content : ${activityContent}`}</Text>
     </View>
   );
 };
