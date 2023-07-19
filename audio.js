@@ -19,19 +19,15 @@ const Audio = () => {
   const [isColorChanged, setIsColorChanged] = useState(false);
   const [buttonX, setButtonX] = useState(0);
   const [buttonY, setButtonY] = useState(0);
-  const [activityCreating, setActivityCreating] = useState(false);
   const [activityContent, setActivityContent] = useState('');
   const [isCommandExecuting, setIsCommandExecuting] = useState(false);
   const activityCreatingRef = useRef(false);
   const commands = {
     'créer activité': () => {
       if (!activityCreatingRef.current) {
-        setActivityCreating(true);
         activityCreatingRef.current = true;
         console.log('Creating activity2 dans command:', activityCreatingRef.current);
-      
-        console.log('Creating activity dans command:', activityCreating);
-
+    
       }
     },
     'bonjour': () => {
@@ -48,9 +44,8 @@ const Audio = () => {
   };
 
   useEffect(() => {
-    console.log('Creating activity has changed to:', activityCreating);
     console.log('Creating activity2 has changed to:', activityCreatingRef.current);
-  }, [activityCreating]);
+  }, [activityCreatingRef.current]);
   
   const executeCommand = (command) => {
     setIsCommandExecuting(true);
@@ -161,16 +156,12 @@ const Audio = () => {
       return index === self.findIndex(otherWord => levenshteinDistance(word, otherWord) / Math.max(word.length, otherWord.length) <= 0.5);
     });
     speech = filteredWords.join(' ');
-    console.log('activitycreating dans result avant condi :', activityCreating);
 
     if (activityCreatingRef.current) {
       console.log('activitycreating est vrai dans result  :', activityContent);
       console.log('activityCreating2 est vrai dans result');
       setActivityContent(speech);
       console.log('Content  :', activityContent);
-      console.log('Creating activity dans result :', activityCreating);
-      setActivityCreating(false);
-      console.log('Creating activity dans result 2:', activityCreating);
 
     }
     setTranscription(speech);
@@ -181,6 +172,34 @@ const Audio = () => {
         executeCommand(commandFunc);
       }
 
+  };
+
+  const Initialisation = async () => {
+      activityCreatingRef.current = false;
+      setActivityContent('');
+  }
+  const handleCreatePost = async () => {
+    try {
+      if (!activityContent || !activityContent.trim()) {
+        throw new Error('Activity content is empty');
+      }
+
+      await axios.post(
+        `${rootUrl}/wp-json/buddyboss/v1/activity`,
+        {
+          content: activityContent,
+          component: 'activity',
+          type: 'activity_update',
+        },
+        { headers }
+      );
+      Alert.alert('Success', 'Activity created successfully.');
+      setActivityContent('');
+      activityCreatingRef.current = false;
+    } catch (error) {
+      console.error(error);
+      Alert.alert('Error', 'Failed to create activity. Please try again.');
+    }
   };
 
   const styles = StyleSheet.create({
@@ -249,10 +268,23 @@ const Audio = () => {
       >
          <Text style={styles.voiceButtonText}>{isListening ? 'Arrêter' : 'Démarrer'}</Text>
       </TouchableOpacity>
-      {activityCreating && <Text style={styles.transcription}>Veuillez prononcer le contenu de l'activité.</Text>}
-      <Text style={styles.transcription}>{`Transcription : ${transcription}`}</Text>
-      <Text style={styles.activity}>{`Création d'activité: ${activityCreating ? 'True ' : 'False'}`}</Text>
-      <Text style={styles.transcription}>{`content : ${activityContent}`}</Text>
+      <Text >{transcription}</Text>
+      <TouchableOpacity style={styles.confirmButton} onPress={Initialisation}>
+            <Text style={styles.confirmButtonText}>initialiser</Text>
+          </TouchableOpacity>
+          {activityCreatingRef.current && (
+  <View>
+    <Text style={styles.transcription}>Veuillez prononcer le contenu de l'activité.</Text>
+    <Text style={styles.activity}>{activityContent}</Text>
+    <TouchableOpacity style={styles.confirmButton} onPress={handleCreatePost}>
+      <Text style={styles.confirmButtonText}>Confirmer</Text>
+    </TouchableOpacity>
+    <TouchableOpacity style={styles.confirmButton} onPress={Initialisation}>
+      <Text style={styles.confirmButtonText}>Initialiser</Text>
+    </TouchableOpacity>
+  </View>
+)}
+
     </View>
   );
 };
