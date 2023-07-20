@@ -22,11 +22,32 @@ const Audio = () => {
   const [activityContent, setActivityContent] = useState('');
   const [isCommandExecuting, setIsCommandExecuting] = useState(false);
   const activityCreatingRef = useRef(false);
+  const folderCreatingRef = useRef(false);
+  const albumCreatingRef = useRef(false);
+
+
+  const [folderTitle, setFolderTitle] = useState('');
+  const [newAlbumTitle, setNewAlbumTitle] = useState('');
+
   const commands = {
     'créer activité': () => {
       if (!activityCreatingRef.current) {
         activityCreatingRef.current = true;
         console.log('Creating activity2 dans command:', activityCreatingRef.current);
+    
+      }
+    },
+    'créer folder': () => {
+      if (!folderCreatingRef.current) {
+        folderCreatingRef.current = true;
+        console.log('Creating folder dans command:', folderCreatingRef.current);
+    
+      }
+    },
+    'créer album': () => {
+      if (!albumCreatingRef.current) {
+        albumCreatingRef.current = true;
+        console.log('Creating folder dans command:', albumCreatingRef.current);
     
       }
     },
@@ -45,7 +66,10 @@ const Audio = () => {
 
   useEffect(() => {
     console.log('Creating activity2 has changed to:', activityCreatingRef.current);
-  }, [activityCreatingRef.current]);
+    console.log('Creating folder has changed to:', folderCreatingRef.current);
+    console.log('Creating album has changed to:', albumCreatingRef.current);
+
+  }, [activityCreatingRef.current,folderCreatingRef.current,albumCreatingRef.current]);
   
   const executeCommand = (command) => {
     setIsCommandExecuting(true);
@@ -164,6 +188,20 @@ const Audio = () => {
       console.log('Content  :', activityContent);
 
     }
+    if (folderCreatingRef.current) {
+      console.log('activitycreating est vrai dans result  :', folderTitle);
+      console.log('activityCreating2 est vrai dans result');
+      setFolderTitle(speech);
+      console.log('Content  :', folderTitle);
+
+    }
+    if (albumCreatingRef.current) {
+      console.log('activitycreating est vrai dans result  :', newAlbumTitle);
+      console.log('activityCreating2 est vrai dans result');
+      setNewAlbumTitle(speech);
+      console.log('Content  :', newAlbumTitle);
+
+    }
     setTranscription(speech);
 
 
@@ -176,7 +214,11 @@ const Audio = () => {
 
   const Initialisation = async () => {
       activityCreatingRef.current = false;
+      folderCreatingRef.current = false;
+      albumCreatingRef.current = false;
       setActivityContent('');
+      setFolderTitle('');
+      setNewAlbumTitle('');
   }
   const handleCreatePost = async () => {
     try {
@@ -201,7 +243,45 @@ const Audio = () => {
       Alert.alert('Error', 'Failed to create activity. Please try again.');
     }
   };
+  const createFolder = async () => {
+    setIsLoading(true);
+    try {
+      if (!folderTitle || !folderTitle.trim()) {
+        throw new Error('Folder title is empty');
+      }
 
+      const response = await axios.post(
+        'https://q-rious.fr/wp-json/buddyboss/v1/document/folder',
+        { title: folderTitle },
+        { headers }
+      );
+
+      if (response.status === 201) {
+        Alert.alert('Success', 'Folder created successfully.');
+      } else {
+        throw new Error('Failed to create folder');
+      }
+    } catch (error) {
+      console.error(error);
+      setError(error);
+      Alert.alert('Error', 'Failed to create folder. Please try again.');
+    }
+  };
+  const handleCreateAlbum = async () => {
+    try {
+      const data = {
+        title: newAlbumTitle,
+      };
+
+      const response = await axios.post(`${rootUrl}/wp-json/buddyboss/v1/media/albums`, data, { headers });
+      const createdAlbum = response.data.album;
+      Alert.alert('Success', 'Album created successfully.');
+      setNewAlbumTitle('');
+    } catch (error) {
+      Alert.alert('Error', 'Failed to create album. Please try again.');
+      console.error(error);
+    }
+  };
   const styles = StyleSheet.create({
     container: {
       flex: 1,
@@ -283,6 +363,30 @@ const Audio = () => {
       <Text style={styles.confirmButtonText}>Initialiser</Text>
     </TouchableOpacity>
   </View>
+)}
+   {folderCreatingRef.current && (
+  <View>
+    <Text style={styles.transcription}>Veuillez prononcer le titre du folder.</Text>
+    <Text style={styles.activity}>{folderTitle}</Text>
+    <TouchableOpacity style={styles.confirmButton} onPress={createFolder}>
+      <Text style={styles.confirmButtonText}>Confirmer</Text>
+    </TouchableOpacity>
+    <TouchableOpacity style={styles.confirmButton} onPress={Initialisation}>
+      <Text style={styles.confirmButtonText}>Initialiser</Text>
+    </TouchableOpacity>
+  </View>
+)}
+{albumCreatingRef.current && (
+  <View>
+    <Text style={styles.transcription}>Veuillez prononcer le titre du album.</Text>
+    <Text style={styles.activity}>{newAlbumTitle}</Text>
+    <TouchableOpacity style={styles.confirmButton} onPress={handleCreateAlbum}>
+      <Text style={styles.confirmButtonText}>Confirmer</Text>
+    </TouchableOpacity>
+    <TouchableOpacity style={styles.confirmButton} onPress={Initialisation}>
+      <Text style={styles.confirmButtonText}>Initialiser</Text>
+    </TouchableOpacity>
+    </View>
 )}
 
     </View>
