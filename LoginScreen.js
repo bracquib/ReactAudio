@@ -3,11 +3,12 @@ import React, { useState } from 'react';
 import { Alert, Button, TextInput, View } from 'react-native';
 import { useDispatch } from 'react-redux';
 import axios from 'axios';
-
+import { useNavigation } from '@react-navigation/native';
 export default function LoginScreen({ navigation }) {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const dispatch = useDispatch();
+
 
   const login = () => {
     axios.post('https://q-rious.fr/wp-json/jwt-auth/v1/token', {

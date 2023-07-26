@@ -15,13 +15,14 @@ import MediaScreen from './Media';
 import MembersScreen from './MembersScreen';
 import ReportScreen from './ReportScreen';
 import Audio from './audio';
-
+import Help from './Help';
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
 
 const BottomTabNavigator = () => {
   return (
     <Tab.Navigator>
+      <Tab.Screen name="Help" component={Help} />
       <Tab.Screen name="Audio" component={Audio} />
       <Tab.Screen name="CreateActivity" component={CreateActivityScreen} />
       <Tab.Screen name="MentionsAndComponents" component={MentionsAndComponentsScreen} />
@@ -42,7 +43,6 @@ const App = () => {
         <Stack.Navigator initialRouteName="Login">
           <Stack.Screen name="Login" component={LoginScreen} options={{ headerShown: false }} />
           <Stack.Screen name="Home" component={BottomTabNavigator} options={{ headerShown: false }} />
-
         </Stack.Navigator>
       </NavigationContainer>
     </Provider>

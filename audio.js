@@ -25,7 +25,31 @@ const Audio = () => {
   const folderCreatingRef = useRef(false);
   const albumCreatingRef = useRef(false);
 
-
+  function convertWordToNumber(word) {
+    const numberWords = {
+      zero: 0, one: 1, two: 2, three: 3, four: 4,
+      five: 5, six: 6, seven: 7, eight: 8, nine: 9
+    };
+  
+    const words = word.trim().toLowerCase().split(' ');
+  
+    // Check for both numeric and word representation of numbers
+    let convertedNumbers = words.map(word => {
+      if (!isNaN(word)) {
+        return parseInt(word);
+      } else {
+        return numberWords[word] || word; // Use the word as is if not found in the numberWords dictionary
+      }
+    });
+  
+    // If there is a single number, return it, otherwise, return the whole array of words
+    if (convertedNumbers.length === 1) {
+      return convertedNumbers[0];
+    } else {
+      const numericValues = convertedNumbers.filter(val => typeof val === 'number');
+      return numericValues.length === 1 ? numericValues[0] : convertedNumbers.join(' ');
+    }
+  }
   const [folderTitle, setFolderTitle] = useState('');
   const [newAlbumTitle, setNewAlbumTitle] = useState('');
 
@@ -180,6 +204,7 @@ const Audio = () => {
       return index === self.findIndex(otherWord => levenshteinDistance(word, otherWord) / Math.max(word.length, otherWord.length) <= 0.5);
     });
     speech = filteredWords.join(' ');
+    speech = convertWordToNumber(speech);
 
     if (activityCreatingRef.current) {
       console.log('activitycreating est vrai dans result  :', activityContent);
@@ -392,5 +417,6 @@ const Audio = () => {
     </View>
   );
 };
+
 
 export default Audio;
