@@ -205,11 +205,12 @@ function levenshteinDistance(a, b) {
     } else {
       fetchDocuments();
       fetchFolders();
+      Voice.destroy().then(Voice.removeAllListeners);
     }
   }, [token, navigation,docdelete.current,folderdelete.current]);
   useEffect(() => {
     return () => {
-      stopListening();
+      Voice.destroy().then(Voice.removeAllListeners);
     };
   }, []);
 

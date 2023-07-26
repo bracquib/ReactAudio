@@ -223,14 +223,15 @@ useEffect(() => {
     navigation.navigate('Login');
   } else {
     fetchActivities();
+    Voice.destroy().then(Voice.removeAllListeners);
+
   }
 }, [token, navigation,activityCreatingRef.current,activityDeleteRef.current,activityfavouriteRef.current]);
-
 useEffect(() => {
-    return () => {
-      stopListening();
-    };
-  }, []);
+  return () => {
+    Voice.destroy().then(Voice.removeAllListeners);
+  };
+}, []);
 
   const fetchActivities = async () => {
     setIsLoading(true);

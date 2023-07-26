@@ -18,7 +18,7 @@ import Audio from './audio';
 import Help from './Help';
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
-
+import { SpeechRecognitionProvider } from './SpeechRecognitionContext';
 const BottomTabNavigator = () => {
   return (
     <Tab.Navigator>
@@ -38,6 +38,7 @@ const BottomTabNavigator = () => {
 
 const App = () => {  
   return (
+    <SpeechRecognitionProvider>
     <Provider store={store}>
       <NavigationContainer>
         <Stack.Navigator initialRouteName="Login">
@@ -46,6 +47,7 @@ const App = () => {
         </Stack.Navigator>
       </NavigationContainer>
     </Provider>
+    </SpeechRecognitionProvider>
   );
 };
 

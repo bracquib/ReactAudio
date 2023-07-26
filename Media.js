@@ -223,6 +223,7 @@ function levenshteinDistance(a, b) {
     deleteAlbumaudio.current = false;
     deletephotoaudio.current = false;
    
+    setcurrentContentaudio('');
     setNewAlbumTitle('');
     setalbumidaudio('');
     setphotoidaudio('');
@@ -235,12 +236,15 @@ useEffect(() => {
   } else {
     fetchAlbums();
     fetchPhotos();
-    fetchMediaDetails();  }
+    fetchMediaDetails(); 
+    Voice.destroy().then(Voice.removeAllListeners);
+
+   }
 }, [token, navigation,albumCreatingRef.current,deleteAlbumaudio.current,deletephotoaudio.current,]);
 
 useEffect(() => {
   return () => {
-    stopListening();
+    Voice.destroy().then(Voice.removeAllListeners);
   };
 }, []);
 
@@ -384,14 +388,14 @@ useEffect(() => {
   <View>
     <Text style={styles.transcription}>Veuillez prononcer l'id de l'album qui doit être Supprimer.</Text>
     <Text style={styles.activity}>{albumidaudio}</Text>
-    <Button title="Delete Activity audio" onPress={() => handleDeleteAlbum(albumidaudio)} />
+    <Button title="Delete album audio" onPress={() => handleDeleteAlbum(albumidaudio)} />
   </View>
 )}
 {deletephotoaudio.current && (
   <View>
     <Text style={styles.transcription}>Veuillez prononcer l'id de la photo qui doit être Supprimer.</Text>
     <Text style={styles.activity}>{photoidaudio}</Text>
-    <Button title="Delete Activity audio" onPress={() => handleDeletePhoto(photoidaudio)} />
+    <Button title="Delete photo audio" onPress={() => handleDeletePhoto(photoidaudio)} />
   </View>
 )}
 

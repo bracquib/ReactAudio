@@ -192,11 +192,12 @@ useEffect(() => {
     navigation.navigate('Login');
   } else {
     fetchGroupes();
+    Voice.destroy().then(Voice.removeAllListeners);
   }
 }, [token, navigation,deletegroup.current]);
 useEffect(() => {
   return () => {
-    stopListening();
+    Voice.destroy().then(Voice.removeAllListeners);
   };
 }, []);
 

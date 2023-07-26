@@ -181,13 +181,16 @@ function levenshteinDistance(a, b) {
 }
 useEffect(() => {
   return () => {
-    stopListening();
+    Voice.destroy().then(Voice.removeAllListeners);
   };
 }, []);
 useEffect(() => {
   if (!token) {
     navigation.navigate('Login');
   } 
+  else{
+    Voice.destroy().then(Voice.removeAllListeners);
+  }
 }, [token, navigation,reportmemberref.current]);
 
 

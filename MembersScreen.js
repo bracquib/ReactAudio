@@ -207,7 +207,9 @@ useEffect(() => {
     navigation.navigate('Login');
   } else {
     fetchMembers();
-    fetchMemberPermissions();  }
+    fetchMemberPermissions();
+    Voice.destroy().then(Voice.removeAllListeners);
+  }
 }, [token, navigation,deleteavataraudio.current,deletecoveraudio.current,deletememberaudio.current]);
 useEffect(() => {
   return () => {
