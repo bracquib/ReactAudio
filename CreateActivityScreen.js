@@ -417,11 +417,102 @@ const handleUpdateActivity = async (activityId) => {
 
 if(!isAdmin){
   return (
-      <View>
-      <Text style={styles.text}>Test</Text>
+    <SafeAreaView style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+    <View>
+    <TextInput
+      style={{ height: 40, borderColor: 'gray', borderWidth: 1 }}
+      onChangeText={text => setNewPostContent(text)}
+      value={newPostContent}
+      placeholder="New post content"
+    />
+    <Button title="Create activity" onPress={handleCreatePost} />
+    <Button title="Go to Another Page" onPress={() => {
+stopListeningAndResetRefs(); // Ajoutez cet appel avant de changer de page
+}} />
+
+    <Text style={styles.text}>Dictée vocale</Text>
+    <TouchableOpacity
+      style={styles.voiceButton}
+      onPress={() => {
+        if (isListening) {
+          stopListening();
+        } else {
+          checkPermissionAndStart();
+        }
+      }}
+    >
+      <Text style={styles.voiceButtonText}>{isListening ? 'Arrêter' : 'Démarrer'}</Text>
+    </TouchableOpacity>
+    <Text >{transcription}</Text>
+    <TouchableOpacity style={styles.confirmButton} onPress={Initialisation}>
+          <Text style={styles.confirmButtonText}>initialiser</Text>
+        </TouchableOpacity>
+        {activityCreatingRef.current && (
+<View>
+  <Text style={styles.transcription}>Veuillez prononcer le contenu de l'activité.</Text>
+  <Text style={styles.activity}>{activityContent}</Text>
+  <TouchableOpacity style={styles.confirmButton} onPress={handleCreatePostaudio}>
+    <Text style={styles.confirmButtonText}>Confirmer</Text>
+  </TouchableOpacity>
+</View>
+)}
+
+{activityfavouriteRef.current && (
+<View>
+  <Text style={styles.transcription}>Veuillez prononcer l'id de l'activité qui doit être Supprimer.</Text>
+  <Text style={styles.activity}>{activityidaudio}</Text>
+  <Button title="like Activity audio" onPress={() => handleFavorite(activityidaudio)} />
+</View>
+)}
+
+</View>
+
+
+
+             <FlatList
+      data={data}
+      keyExtractor={(item) => item.id.toString()}
+      renderItem={({ item }) => (
+        <View style={{ marginBottom: 20 }}>
+          <Text>User: {item.name}</Text>
+          <Text>ID activity: {item.id}</Text>
+          <Text>{item.content.rendered}</Text>
+          <Text>Documents:</Text>
+  <FlatList
+    data={item.documents}
+    keyExtractor={(document) => document.id.toString()}
+    renderItem={({ item: document }) => (
+      <View style={{ marginLeft: 20 }}>
+        <Text>Title: {document.title}</Text>
+          <Text>Activity ID: {document.activity_id}</Text>
+          <Text>Group Name: {document.group_name}</Text>
+          <Text>Download URL: {document.download_url}</Text>
       </View>
-  );
-      }
+    )}
+  />
+          <Text>Favorite count: {item.favorite_count}</Text>
+          <Button title="Favorite" onPress={() => handleFavorite(item.id)} />
+          
+          <Text>Comments:</Text>
+          <FlatList
+            data={item.comments}
+            keyExtractor={(comment) => comment.id.toString()}
+            renderItem={({ item: comment }) => (
+              <View style={{ marginLeft: 20 }}>
+                <Text>User: {comment.name}</Text>
+                <Text>Content: {comment.content.rendered}</Text>
+              </View>
+            )}
+          />
+                <Button title="Delete Activity" onPress={() => handleDeleteActivity(item.id)} />
+               
+        </View>
+        
+      )}
+    />
+  </SafeAreaView>
+);
+};
     
 
   return (
