@@ -329,6 +329,7 @@ useEffect(() => {
           <Image source={{ uri: member.avatar_urls.thumb }} style={{ width: 100, height: 100 }} />
           <Text>ID:{member.id}</Text>
           <Text>Name: {member.name}</Text>
+          <Text>admin: {member.is_wp_admin ? 'true' : 'false'}</Text>
           <Image source={{ uri: member.cover_url }} style={{ width: 200, height: 100 }} />
           <Button title="Delete Avatar" onPress={() => handleDeleteAvatar(member.id)} />
           <Button title="Delete Cover" onPress={() => handleDeleteCover(member.id)} />

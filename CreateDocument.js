@@ -198,6 +198,10 @@ function levenshteinDistance(a, b) {
     setfolderIdaudio('');
 
 }
+const stopListeningAndResetRefs = () => {
+  stopListening();
+  Initialisation();
+};
 
   useEffect(() => {
     if (!token) {
@@ -372,7 +376,9 @@ function levenshteinDistance(a, b) {
   return (
     <ScrollView contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', alignItems: 'center' }}>
             <Button title="fetch folder" onPress={fetchFolders} />
-            <Button title="fetch document" onPress={fetchDocuments} />
+            <Button title="Go to Another Page" onPress={() => {
+  stopListeningAndResetRefs(); // Ajoutez cet appel avant de changer de page
+}} />
 
       <View>
        <Text style={styles.text}>Dictée vocale</Text>

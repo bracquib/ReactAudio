@@ -16,7 +16,7 @@ const MediaScreen  =({ navigation }) => {
   const [newAlbumPrivacy, setNewAlbumPrivacy] = useState('public');
 
   const token = useSelector(state => state.token);
-
+  const isAdmin = useSelector((state) => state.isAdmin); // Get the isAdmin flag from Redux state
 
   const [isCommandExecuting, setIsCommandExecuting] = useState(false);
   const [isListening, setIsListening] = useState(false);
@@ -330,7 +330,10 @@ useEffect(() => {
   }
 };
 
-
+const stopListeningAndResetRefs = () => {
+  stopListening();
+  Initialisation();
+};
  const handleUpdateAlbumTitle = async (albumId) => {
   try {
     const data = {
@@ -352,10 +355,14 @@ useEffect(() => {
   }
 };
 
+
+
   return (
     <ScrollView contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', alignItems: 'center' }}>
-      <Button title="fetch album" onPress={fetchAlbums} />
- <Text style={styles.text}>Dictée vocale</Text>
+  <Button title="Go to Another Page" onPress={() => {
+  stopListeningAndResetRefs(); // Ajoutez cet appel avant de changer de page
+}} />
+<Text style={styles.text}>Dictée vocale</Text>
       <TouchableOpacity
         style={styles.voiceButton}
         onPress={() => {

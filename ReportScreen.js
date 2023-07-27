@@ -111,7 +111,10 @@ const stopListening = async () => {
     console.error(e);
   }
 };
-
+const stopListeningAndResetRefs = () => {
+  stopListening();
+  Initialisation();
+};
 function levenshteinDistance(a, b) {
   const matrix = [];
 
@@ -227,6 +230,9 @@ useEffect(() => {
     <View>
       <View>
         <Text style={styles.text}>Dictée vocale</Text>
+        <Button title="Go to Another Page" onPress={() => {
+  stopListeningAndResetRefs(); // Ajoutez cet appel avant de changer de page
+}} />
       <TouchableOpacity
         style={styles.voiceButton}
         onPress={() => {

@@ -18,6 +18,7 @@ const CreateActivityScreen = ({ navigation }) => {
 
   const [isCommandExecuting, setIsCommandExecuting] = useState(false);
   const token = useSelector(state => state.token);
+  const isAdmin = useSelector(state => state.isAdmin);
   const [isListening, setIsListening] = useState(false);
   const [transcription, setTranscription] = useState('');
   const activityCreatingRef = useRef(false);
@@ -217,6 +218,10 @@ function levenshteinDistance(a, b) {
 
 
 }
+const stopListeningAndResetRefs = () => {
+  stopListening();
+  Initialisation();
+};
 
 useEffect(() => {
   if (!token) {
@@ -410,6 +415,14 @@ const handleUpdateActivity = async (activityId) => {
   }
 };
 
+if(!isAdmin){
+  return (
+      <View>
+      <Text style={styles.text}>Test</Text>
+      </View>
+  );
+      }
+    
 
   return (
     <SafeAreaView style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
@@ -421,7 +434,9 @@ const handleUpdateActivity = async (activityId) => {
         placeholder="New post content"
       />
       <Button title="Create activity" onPress={handleCreatePost} />
-      <Button title="fetch activity" onPress={fetchActivities} />
+      <Button title="Go to Another Page" onPress={() => {
+  stopListeningAndResetRefs(); // Ajoutez cet appel avant de changer de page
+}} />
 
       <Text style={styles.text}>Dictée vocale</Text>
       <TouchableOpacity

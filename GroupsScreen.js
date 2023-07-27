@@ -186,7 +186,10 @@ function levenshteinDistance(a, b) {
 
 
 }
-
+const stopListeningAndResetRefs = () => {
+  stopListening();
+  Initialisation();
+};
 useEffect(() => {
   if (!token) {
     navigation.navigate('Login');
@@ -329,8 +332,9 @@ const deleteGroup = async (groupId) => {
 
   return (
     <ScrollView contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', alignItems: 'center' }}>
-            <Button title="fetch group" onPress={fetchGroupes} />
-
+ <Button title="Go to Another Page" onPress={() => {
+  stopListeningAndResetRefs(); // Ajoutez cet appel avant de changer de page
+}} />
       <View>
        <Text style={styles.text}>Dictée vocale</Text>
       <TouchableOpacity

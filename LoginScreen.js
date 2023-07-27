@@ -1,26 +1,50 @@
-// LoginScreen.js
 import React, { useState } from 'react';
 import { Alert, Button, TextInput, View } from 'react-native';
 import { useDispatch } from 'react-redux';
 import axios from 'axios';
 import { useNavigation } from '@react-navigation/native';
+
 export default function LoginScreen({ navigation }) {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const dispatch = useDispatch();
 
-
   const login = () => {
-    axios.post('https://q-rious.fr/wp-json/jwt-auth/v1/token', {
-      username: username,
-      password: password
-    }).then(response => {
-      dispatch({ type: 'SET_TOKEN', token: response.data.token });
-      navigation.navigate('Home');
-    }).catch(error => {
-      Alert.alert('Error', 'Failed to log in. Please check your credentials.');
-      console.error(error);
-    });
+    axios
+      .post('https://q-rious.fr/wp-json/jwt-auth/v1/token', {
+        username: username,
+        password: password
+      })
+      .then((response) => {
+        // Save the authentication token in the app's state using Redux
+        dispatch({ type: 'SET_TOKEN', token: response.data.token });
+
+        // Fetch member details to check if the member is an admin
+        axios
+          .get('https://q-rious.fr/wp-json/buddyboss/v1/members/me', {
+            headers: {
+              Authorization: `Bearer ${response.data.token}`
+            }
+          })
+          .then((memberResponse) => {
+            const memberData = memberResponse.data;
+            const isAdmin = memberData.is_wp_admin ;
+
+            // Save the isAdmin flag in the app's state using Redux
+            dispatch({ type: 'SET_IS_ADMIN', isAdmin });
+
+            // Navigate to the appropriate screen based on admin status
+            navigation.navigate('Home');
+          })
+          .catch((error) => {
+            Alert.alert('Error', 'Failed to fetch member details. Please try again.');
+            console.error(error);
+          });
+      })
+      .catch((error) => {
+        Alert.alert('Error', 'Failed to log in. Please check your credentials.');
+        console.error(error);
+      });
   };
 
   return (
