@@ -1,57 +1,69 @@
-// CreateActivityScreen.js
 import React, { useEffect, useRef, useState } from 'react';
-import { View, FlatList, Text, Button, TextInput, ActivityIndicator, Alert,SafeAreaView ,StyleSheet,TouchableOpacity, ScrollView} from 'react-native';
+import {
+  View,
+  FlatList,
+  Text,
+  Button,
+  TextInput,
+  ActivityIndicator,
+  Alert,
+  SafeAreaView,
+  StyleSheet,
+  TouchableOpacity,
+  ScrollView,
+} from 'react-native';
 import { useSelector } from 'react-redux';
 import axios from 'axios';
 import { check, PERMISSIONS, RESULTS, request, openSettings } from 'react-native-permissions';
 import Voice from '@react-native-community/voice';
-const rootUrl = 'https://q-rious.fr'; // Remplacez par votre URL racine
+
+const rootUrl = 'https://q-rious.fr'; // Replace with your root URL
 
 const CreateActivityScreen = ({ navigation }) => {
   const [data, setData] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   const [commentsInputs, setCommentsInputs] = useState({});
-  const [newPostContent, setNewPostContent] = useState(''); // Ajouté
-  const [updateInputs, setUpdateInputs] = useState({}); // ajouté pour stocker les modifications d'activité
-
-
+  const [newPostContent, setNewPostContent] = useState('');
+  const [updateInputs, setUpdateInputs] = useState({});
   const [isCommandExecuting, setIsCommandExecuting] = useState(false);
-  const token = useSelector(state => state.token);
-  const isAdmin = useSelector(state => state.isAdmin);
+  const token = useSelector((state) => state.token);
+  const isAdmin = useSelector((state) => state.isAdmin);
   const [isListening, setIsListening] = useState(false);
   const [transcription, setTranscription] = useState('');
   const activityCreatingRef = useRef(false);
   const [activityContent, setActivityContent] = useState('');
   const activityDeleteRef = useRef(false);
-  const [activityidaudio,setactivityidaudio] = useState('');
+  const [activityidaudio, setActivityidaudio] = useState('');
   const activityfavouriteRef = useRef(false);
   const activityCommentRef = useRef(false);
-
 
   const headers = {
     'Content-Type': 'application/json',
     'Authorization': `Bearer ${token}`
   };
 
+  // Function to convert words to numbers (e.g., one, two, three -> 1, 2, 3)
   function convertWordToNumber(word) {
+    // Dictionary of number words and their numeric values
     const numberWords = {
       zero: 0, one: 1, two: 2, three: 3, four: 4,
       five: 5, six: 6, seven: 7, eight: 8, nine: 9
     };
-  
+
+    // Split the word into individual words
     const words = word.trim().toLowerCase().split(' ');
-  
+
     // Check for both numeric and word representation of numbers
     let convertedNumbers = words.map(word => {
       if (!isNaN(word)) {
-        return parseInt(word);
+        return parseInt(word); // Convert numeric words to numbers
       } else {
         return numberWords[word] || word; // Use the word as is if not found in the numberWords dictionary
       }
     });
-  
-    // If there is a single number, return it, otherwise, return the whole array of words
+
+    // If there is a single number, return it; otherwise, return the whole array of words
     if (convertedNumbers.length === 1) {
       return convertedNumbers[0];
     } else {
@@ -60,13 +72,14 @@ const CreateActivityScreen = ({ navigation }) => {
     }
   }
 
+  // Function to check permission for audio recording and start listening
   const checkPermissionAndStart = async () => {
     const checkPermission = await check(PERMISSIONS.ANDROID.RECORD_AUDIO);
 
     switch (checkPermission) {
       case RESULTS.UNAVAILABLE:
         console.log('This feature is not available (on this device / in this context)');
-        // Informer l'utilisateur que la fonctionnalité n'est pas disponible
+        // Inform the user that the feature is not available
         break;
       case RESULTS.DENIED:
         console.log('The permission has not been requested / is denied but requestable');
@@ -74,7 +87,7 @@ const CreateActivityScreen = ({ navigation }) => {
         if (requestPermission === RESULTS.GRANTED) {
           startListening();
         } else {
-          // L'utilisateur a refusé l'autorisation, afficher un message expliquant pourquoi l'autorisation est nécessaire
+          // User has denied the permission, show a message explaining why the permission is necessary
         }
         break;
       case RESULTS.GRANTED:
@@ -83,63 +96,64 @@ const CreateActivityScreen = ({ navigation }) => {
         break;
       case RESULTS.BLOCKED:
         console.log('The permission is denied and not requestable anymore');
-        // Si l'autorisation est bloquée, demander à l'utilisateur d'ouvrir les paramètres de l'application et d'autoriser l'accès manuellement
+        // If the permission is blocked, ask the user to open the app settings and manually grant the access
         openSettings().catch(() => console.warn('Cannot open settings'));
         break;
     }
   };
 
+  // Commands to be recognized by the voice recognition system
   const commands = {
     'créer activité': () => {
       if (!activityCreatingRef.current) {
         activityCreatingRef.current = true;
-        console.log('Creating activity2 dans command:', activityCreatingRef.current);
-    
+        console.log('Creating activity2 in command:', activityCreatingRef.current);
       }
-
     },
     'supprimer activité': () => {
       if (!activityDeleteRef.current) {
         activityDeleteRef.current = true;
-        console.log('Creating activity2 dans command:', activityDeleteRef.current);
-    
+        console.log('Creating activity2 in command:', activityDeleteRef.current);
       }
-  },
-  
+    },
     'aimer activité': () => {
       if (!activityfavouriteRef.current) {
         activityfavouriteRef.current = true;
-        console.log('Creating activity2 dans command:', activityfavouriteRef.current);
-    
+        console.log('Creating activity2 in command:', activityfavouriteRef.current);
       }
-  },
-}
+    },
+  };
 
-const executeCommand = (command) => {
-  setIsCommandExecuting(true);
-  command();
-  setIsCommandExecuting(false);
-};
-const startListening = async () => {
-  try {
-    setIsListening(true);
-    setTranscription('');
-    await Voice.start('fr-FR'); // pour français
-  } catch (e) {
-    console.error(e);
-  }
-};
+  // Execute the recognized command
+  const executeCommand = (command) => {
+    setIsCommandExecuting(true);
+    command();
+    setIsCommandExecuting(false);
+  };
 
-const stopListening = async () => {
-  try {
-    setIsListening(false);
-    await Voice.stop();
-  } catch (e) {
-    console.error(e);
-  }
-};
+  // Start listening for voice commands
+  const startListening = async () => {
+    try {
+      setIsListening(true);
+      setTranscription('');
+      await Voice.start('fr-FR'); // for French language
+    } catch (e) {
+      console.error(e);
+    }
+  };
 
-function levenshteinDistance(a, b) {
+  // Stop listening for voice commands
+  const stopListening = async () => {
+    try {
+      setIsListening(false);
+      await Voice.stop();
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  // Function to calculate Levenshtein distance between two strings
+  function levenshteinDistance(a, b) {
   const matrix = [];
 
   // Increment along the first column of each row
@@ -165,59 +179,55 @@ function levenshteinDistance(a, b) {
 
   return matrix[b.length][a.length];
 }
+ // Event handler for speech recognition results
+ Voice.onSpeechResults = (e) => {
+  let speech = e.value ? e.value.join(' ') : '';
 
-  Voice.onSpeechResults = (e) => {
-    let speech = e.value ? e.value.join(' ') : '';
+  // Filtering the speech
+  speech = speech.trim(); // Remove leading and trailing spaces
+  speech = speech.replace(/\s+/g, ' '); // Remove multiple spaces
+  speech = speech.toLowerCase(); // Convert to lowercase for easy command matching
 
-    // Filtrage du discours
-    speech = speech.trim(); // Supprimer les espaces avant et après
-    speech = speech.replace(/\s+/g, ' '); // Supprimer les espaces multiples
-    speech = speech.toLowerCase(); // Convertir en minuscules pour faciliter la correspondance des commandes
+  // Keeping only the first word of each sequence of similar words
+  const words = speech.split(' ');
+  const filteredWords = words.filter((word, index, self) => {
+    // Return true if the word is the first of its similar word sequence
+    return index === self.findIndex(otherWord => levenshteinDistance(word, otherWord) / Math.max(word.length, otherWord.length) <= 0.5);
+  });
+  speech = filteredWords.join(' ');
+  speech = convertWordToNumber(speech);
 
-    // Garder seulement le premier mot de chaque séquence de mots similaires
-    const words = speech.split(' ');
-    const filteredWords = words.filter((word, index, self) => {
-      // Retourner true si le mot est le premier de sa séquence de mots similaires
-      return index === self.findIndex(otherWord => levenshteinDistance(word, otherWord) / Math.max(word.length, otherWord.length) <= 0.5);
-    });
-    speech = filteredWords.join(' ');
-     speech = convertWordToNumber(speech);
+  if (activityCreatingRef.current) {
+    console.log('activitycreating is true in result:', activityContent);
+    console.log('activityCreating2 is true in result');
+    setActivityContent(speech);
+    console.log('Content:', activityContent);
+  }
+  if (activityDeleteRef.current || activityfavouriteRef) {
+    console.log('activitycreating is true in result:', activityidaudio);
+    console.log('activityCreating2 is true in result');
+    setActivityidaudio(speech);
+    console.log('Content:', activityidaudio);
+  }
 
-    if (activityCreatingRef.current) {
-      console.log('activitycreating est vrai dans result  :', activityContent);
-      console.log('activityCreating2 est vrai dans result');
-      setActivityContent(speech);
-      console.log('Content  :', activityContent);
+  setTranscription(speech);
 
-    }
-    if (activityDeleteRef.current || activityfavouriteRef) {
-      console.log('activitycreating est vrai dans result  :', activityidaudio);
-      console.log('activityCreating2 est vrai dans result');
-      setactivityidaudio(speech);
-      console.log('Content  :', activityidaudio);
+  const commandFunc = commands[speech];
+  if (commandFunc) {
+    executeCommand(commandFunc);
+  }
+};
 
-    }
-   
+// Function to initialize activity flags and inputs
+const Initialisation = async () => {
+  activityCreatingRef.current = false;
+  activityDeleteRef.current = false;
+  activityfavouriteRef.current = false;
+  setActivityidaudio('');
+  setActivityContent('');
+};
 
-    setTranscription(speech);
-
-
-      const commandFunc = commands[speech];
-      if (commandFunc) {
-        executeCommand(commandFunc);
-      }
-
-  };
-  const Initialisation = async () => {
-    activityCreatingRef.current = false;
-    activityDeleteRef.current = false;
-    activityfavouriteRef.current=false;
-
-    setactivityidaudio('');
-    setActivityContent('');
-
-
-}
+// Function to stop listening and reset activity flags and inputs
 const stopListeningAndResetRefs = () => {
   stopListening();
   Initialisation();
@@ -229,140 +239,106 @@ useEffect(() => {
   } else {
     fetchActivities();
     Voice.destroy().then(Voice.removeAllListeners);
-
   }
-}, [token, navigation,activityCreatingRef.current,activityDeleteRef.current,activityfavouriteRef.current]);
+}, [token, navigation, activityCreatingRef.current, activityDeleteRef.current, activityfavouriteRef.current]);
+
 useEffect(() => {
   return () => {
     Voice.destroy().then(Voice.removeAllListeners);
   };
 }, []);
 
-  const fetchActivities = async () => {
-    setIsLoading(true);
-    try {
-      const response = await axios.get("https://q-rious.fr/wp-json/buddyboss/v1/activity", { headers });
-      const enrichedData = await enrichActivityData(response.data);
-      setData(enrichedData);
-      setIsLoading(false);
-    } catch (error) {
-      console.error(error);
-      setError(error);
-      setIsLoading(false);
-    }
-  };
-
-  const enrichActivityData = async (activities) => {
-    return Promise.all(activities.map(async activity => {
-      const commentsResponse = await axios.get(`https://q-rious.fr/wp-json/buddyboss/v1/activity/${activity.id}/comment`, { headers });
-      const comments = commentsResponse.data.comments;
-  
-      // Ajout d'une requête pour récupérer les documents avec l'activity_id correspondant
-      const documentsResponse = await axios.get(`https://q-rious.fr/wp-json/buddyboss/v1/document?activity_id=${activity.id}`, { headers });
-      const documents = documentsResponse.data.filter(document => document.activity_id === activity.id);
-  
-      return {...activity, comments, documents};
-    }));
-  };
-  
-  
-
-  const handleComment = async (activityId) => {
-    setIsLoading(true);
-    try {
-      const currentComment = commentsInputs[activityId];
-  
-      if (!currentComment || !currentComment.trim()) {
-        throw new Error(`Comment for activity ${activityId} is empty`);
-      }
-  
-      const response = await axios.post(
-        `https://q-rious.fr/wp-json/buddyboss/v1/activity/${activityId}/comment`,
-        { content: currentComment },
-        { headers }
-      );
-  
-      if (response.status === 201) {
-        fetchActivities();
-        setCommentsInputs(prevState => ({
-          ...prevState,
-          [activityId]: '',
-        }));
-        Alert.alert('Success', 'Comment created successfully.');
-      } else {
-        throw new Error('Failed to create comment');
-      }
-    } catch (error) {
-      console.error(error);
-      setError(error);
-      Alert.alert('Error', 'Failed to create comment. Please try again.');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-  
-
-
-
-const handleUpdateActivity = async (activityId) => {
+// Function to fetch activities from the server
+const fetchActivities = async () => {
   setIsLoading(true);
   try {
-    const currentContent = updateInputs[activityId];
-
-    if (!currentContent || !currentContent.trim()) {
-      throw new Error(`Updated content for activity ${activityId} is empty`);
-    }
-
-    await axios.patch(
-      `https://q-rious.fr/wp-json/buddyboss/v1/activity/${activityId}`,
-      { content: currentContent },
-      { headers }
-    );
-    Alert.alert('Success', 'Activity updated successfully.');
-    fetchActivities();
+    const response = await axios.get(`${rootUrl}/wp-json/buddyboss/v1/activity`, { headers });
+    const enrichedData = await enrichActivityData(response.data);
+    setData(enrichedData);
+    setIsLoading(false);
   } catch (error) {
     console.error(error);
     setError(error);
-    Alert.alert('Error', 'Failed to update activity. Please try again.');
+    setIsLoading(false);
+  }
+};
+
+// Function to enrich activity data with comments and documents
+const enrichActivityData = async (activities) => {
+  return Promise.all(activities.map(async activity => {
+    const commentsResponse = await axios.get(`${rootUrl}/wp-json/buddyboss/v1/activity/${activity.id}/comment`, { headers });
+    const comments = commentsResponse.data.comments;
+
+    // Fetch documents with the corresponding activity_id
+    const documentsResponse = await axios.get(`${rootUrl}/wp-json/buddyboss/v1/document?activity_id=${activity.id}`, { headers });
+    const documents = documentsResponse.data.filter(document => document.activity_id === activity.id);
+
+    return { ...activity, comments, documents };
+  }));
+};
+
+// Function to handle adding a comment to an activity
+const handleComment = async (activityId) => {
+  setIsLoading(true);
+  try {
+    const currentComment = commentsInputs[activityId];
+
+    if (!currentComment || !currentComment.trim()) {
+      throw new Error(`Comment for activity ${activityId} is empty`);
+    }
+
+    const response = await axios.post(
+      `${rootUrl}/wp-json/buddyboss/v1/activity/${activityId}/comment`,
+      { content: currentComment },
+      { headers }
+    );
+
+    if (response.status === 201) {
+      fetchActivities();
+      setCommentsInputs(prevState => ({
+        ...prevState,
+        [activityId]: '',
+      }));
+      Alert.alert('Success', 'Comment created successfully.');
+    } else {
+      throw new Error('Failed to create comment');
+    }
+  } catch (error) {
+    console.error(error);
+    setError(error);
+    Alert.alert('Error', 'Failed to create comment. Please try again.');
   } finally {
     setIsLoading(false);
   }
 };
-  
 
-  const handleCreatePost = async () => { // Ajouté
-    try {
-      if (!newPostContent || !newPostContent.trim()) {
-        throw new Error(`New post content is empty`);
-      }
-
-      await axios.post(
-        `https://q-rious.fr/wp-json/buddyboss/v1/activity`,
-        { 
-          content: newPostContent, 
-          component: 'activity', 
-          type: 'activity_update' 
-        },
-        { headers }
-      );
-      Alert.alert('Success', 'Activity created successfully.');
-      setNewPostContent('');
-      fetchActivities();
-    } catch (error) {
-      Alert.alert('Error', 'Failed to create activity. Please try again.');
-      console.error(error);
+// Function to handle creating a new post (activity)
+const handleCreatePost = async () => {
+  try {
+    if (!newPostContent || !newPostContent.trim()) {
+      throw new Error(`New post content is empty`);
     }
-  }; // Fin ajouté
 
-  if (isLoading) {
-    return <ActivityIndicator size="large" color="#0000ff" />;
+    await axios.post(
+      `${rootUrl}/wp-json/buddyboss/v1/activity`,
+      {
+        content: newPostContent,
+        component: 'activity',
+        type: 'activity_update',
+      },
+      { headers }
+    );
+    Alert.alert('Success', 'Activity created successfully.');
+    setNewPostContent('');
+    fetchActivities();
+  } catch (error) {
+    Alert.alert('Error', 'Failed to create activity. Please try again.');
+    console.error(error);
   }
+};
 
-  if (error) {
-    return <Text>Une erreur est survenue : {error.message}</Text>;
-  }
-
- const handleCreatePostaudio = async () => {
+// Function to handle creating an activity using voice input
+const handleCreatePostaudio = async () => {
   try {
     if (!activityContent || !activityContent.trim()) {
       throw new Error('Activity content is empty');
@@ -386,11 +362,11 @@ const handleUpdateActivity = async (activityId) => {
   }
 };
 
- 
- const handleFavorite = async (activityId) => {
+// Function to handle liking an activity
+const handleFavorite = async (activityId) => {
   setIsLoading(true);
   try {
-    await axios.patch(`https://q-rious.fr/wp-json/buddyboss/v1/activity/${activityId}/favorite`, {}, { headers });
+    await axios.patch(`${rootUrl}/wp-json/buddyboss/v1/activity/${activityId}/favorite`, {}, { headers });
     fetchActivities();
   } catch (error) {
     console.error(error);
@@ -400,10 +376,11 @@ const handleUpdateActivity = async (activityId) => {
   }
 };
 
- const handleDeleteActivity = async (activityId) => {
+// Function to handle deleting an activity
+const handleDeleteActivity = async (activityId) => {
   setIsLoading(true);
   try {
-    await axios.delete(`https://q-rious.fr/wp-json/buddyboss/v1/activity/${activityId}`, { headers });
+    await axios.delete(`${rootUrl}/wp-json/buddyboss/v1/activity/${activityId}`, { headers });
     Alert.alert('Success', 'Activity deleted successfully.');
     fetchActivities();
   } catch (error) {
@@ -414,6 +391,7 @@ const handleUpdateActivity = async (activityId) => {
     setIsLoading(false);
   }
 };
+
 
 if(!isAdmin){
   return (
@@ -426,11 +404,11 @@ if(!isAdmin){
       placeholder="New post content"
     />
     <Button title="Create activity" onPress={handleCreatePost} />
-    <Button title="Go to Another Page" onPress={() => {
-stopListeningAndResetRefs(); // Ajoutez cet appel avant de changer de page
+    <Button title="Initialize before anything" onPress={() => {
+stopListeningAndResetRefs(); 
 }} />
 
-    <Text style={styles.text}>Dictée vocale</Text>
+    <Text style={styles.text}>Command</Text>
     <TouchableOpacity
       style={styles.voiceButton}
       onPress={() => {
@@ -441,23 +419,23 @@ stopListeningAndResetRefs(); // Ajoutez cet appel avant de changer de page
         }
       }}
     >
-      <Text style={styles.voiceButtonText}>{isListening ? 'Arrêter' : 'Démarrer'}</Text>
+      <Text style={styles.voiceButtonText}>{isListening ? 'stop' : 'start'}</Text>
     </TouchableOpacity>
     <Text >{transcription}</Text>
 
         {activityCreatingRef.current && (
 <View>
-  <Text style={styles.transcription}>Veuillez prononcer le contenu de l'activité.</Text>
+  <Text style={styles.transcription}>activity content:</Text>
   <Text style={styles.activity}>{activityContent}</Text>
   <TouchableOpacity style={styles.confirmButton} onPress={handleCreatePostaudio}>
-    <Text style={styles.confirmButtonText}>Confirmer</Text>
+    <Text style={styles.confirmButtonText}>Confirm</Text>
   </TouchableOpacity>
 </View>
 )}
 
 {activityfavouriteRef.current && (
 <View>
-  <Text style={styles.transcription}>Veuillez prononcer l'id de l'activité qui doit être Supprimer.</Text>
+  <Text style={styles.transcription}>ID of activity to like</Text>
   <Text style={styles.activity}>{activityidaudio}</Text>
   <Button title="like Activity audio" onPress={() => handleFavorite(activityidaudio)} />
 </View>
@@ -522,11 +500,11 @@ stopListeningAndResetRefs(); // Ajoutez cet appel avant de changer de page
         placeholder="New post content"
       />
       <Button title="Create activity" onPress={handleCreatePost} />
-      <Button title="click here to initialize" onPress={() => {
-  stopListeningAndResetRefs(); // Ajoutez cet appel avant de changer de page
+      <Button title="Initialize before anything" onPress={() => {
+  stopListeningAndResetRefs();
 }} />
 
-      <Text style={styles.text}>Dictée vocale</Text>
+      <Text style={styles.text}>Command</Text>
       <TouchableOpacity
         style={styles.voiceButton}
         onPress={() => {
@@ -537,28 +515,28 @@ stopListeningAndResetRefs(); // Ajoutez cet appel avant de changer de page
           }
         }}
       >
-        <Text style={styles.voiceButtonText}>{isListening ? 'Arrêter' : 'Démarrer'}</Text>
+        <Text style={styles.voiceButtonText}>{isListening ? 'Stop' : 'Start'}</Text>
       </TouchableOpacity>
       <Text >{transcription}</Text>
           {activityCreatingRef.current && (
   <View>
-    <Text style={styles.transcription}>Veuillez prononcer le contenu de l'activité.</Text>
+    <Text style={styles.transcription}>Activity content:</Text>
     <Text style={styles.activity}>{activityContent}</Text>
     <TouchableOpacity style={styles.confirmButton} onPress={handleCreatePostaudio}>
-      <Text style={styles.confirmButtonText}>Confirmer</Text>
+      <Text style={styles.confirmButtonText}>Confirm</Text>
     </TouchableOpacity>
   </View>
 )}
 {activityDeleteRef.current && (
   <View>
-    <Text style={styles.transcription}>Veuillez prononcer l'id de l'activité qui doit être Supprimer.</Text>
+    <Text style={styles.transcription}>ID of activity that is delete</Text>
     <Text style={styles.activity}>{activityidaudio}</Text>
     <Button title="Delete Activity audio" onPress={() => handleDeleteActivity(activityidaudio)} />
   </View>
 )}
 {activityfavouriteRef.current && (
   <View>
-    <Text style={styles.transcription}>Veuillez prononcer l'id de l'activité qui doit être Supprimer.</Text>
+    <Text style={styles.transcription}>ID of activity that is like.</Text>
     <Text style={styles.activity}>{activityidaudio}</Text>
     <Button title="like Activity audio" onPress={() => handleFavorite(activityidaudio)} />
   </View>
@@ -612,15 +590,7 @@ stopListeningAndResetRefs(); // Ajoutez cet appel avant de changer de page
               )}
             />
                   <Button title="Delete Activity" onPress={() => handleDeleteActivity(item.id)} />
-                  <TextInput
-        style={{ height: 40, borderColor: 'gray', borderWidth: 1 }}
-        onChangeText={text => setUpdateInputs(prevState => ({
-          ...prevState,
-          [item.id]: text,
-        }))}
-        value={updateInputs[item.id] || item.content.rendered}
-      />
-      <Button title="Update Activity" onPress={() => handleUpdateActivity(item.id)} />
+                 
           </View>
           
         )}

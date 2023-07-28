@@ -4,7 +4,7 @@ import { useSelector } from 'react-redux';
 import axios from 'axios';
 import { check, PERMISSIONS, RESULTS, request, openSettings } from 'react-native-permissions';
 import Voice from '@react-native-community/voice';
-const rootUrl = 'https://q-rious.fr'; // Remplacez par vot
+const rootUrl = 'https://q-rious.fr'; 
 const ReportScreen =  ({ navigation }) => {
   const token = useSelector(state => state.token);
 
@@ -52,7 +52,6 @@ const ReportScreen =  ({ navigation }) => {
     switch (checkPermission) {
       case RESULTS.UNAVAILABLE:
         console.log('This feature is not available (on this device / in this context)');
-        // Informer l'utilisateur que la fonctionnalité n'est pas disponible
         break;
       case RESULTS.DENIED:
         console.log('The permission has not been requested / is denied but requestable');
@@ -60,7 +59,6 @@ const ReportScreen =  ({ navigation }) => {
         if (requestPermission === RESULTS.GRANTED) {
           startListening();
         } else {
-          // L'utilisateur a refusé l'autorisation, afficher un message expliquant pourquoi l'autorisation est nécessaire
         }
         break;
       case RESULTS.GRANTED:
@@ -69,14 +67,13 @@ const ReportScreen =  ({ navigation }) => {
         break;
       case RESULTS.BLOCKED:
         console.log('The permission is denied and not requestable anymore');
-        // Si l'autorisation est bloquée, demander à l'utilisateur d'ouvrir les paramètres de l'application et d'autoriser l'accès manuellement
         openSettings().catch(() => console.warn('Cannot open settings'));
         break;
     }
   };
 
   const commands = {
-    'reporter un membre': () => {
+    'reporter membre': () => {
       if (!reportmemberref.current) {
         reportmemberref.current = true;
         console.log('Creating activity2 dans command:', reportmemberref.current);
@@ -96,7 +93,7 @@ const startListening = async () => {
   try {
     setIsListening(true);
     setTranscription('');
-    await Voice.start('fr-FR'); // pour français
+    await Voice.start('fr-FR'); 
   } catch (e) {
     console.error(e);
   }
@@ -145,15 +142,13 @@ function levenshteinDistance(a, b) {
   Voice.onSpeechResults = (e) => {
     let speech = e.value ? e.value.join(' ') : '';
 
-    // Filtrage du discours
-    speech = speech.trim(); // Supprimer les espaces avant et après
-    speech = speech.replace(/\s+/g, ' '); // Supprimer les espaces multiples
-    speech = speech.toLowerCase(); // Convertir en minuscules pour faciliter la correspondance des commandes
+    
+    speech = speech.trim(); 
+    speech = speech.replace(/\s+/g, ' '); 
+        speech = speech.toLowerCase(); 
 
-    // Garder seulement le premier mot de chaque séquence de mots similaires
     const words = speech.split(' ');
     const filteredWords = words.filter((word, index, self) => {
-      // Retourner true si le mot est le premier de sa séquence de mots similaires
       return index === self.findIndex(otherWord => levenshteinDistance(word, otherWord) / Math.max(word.length, otherWord.length) <= 0.5);
     });
     speech = filteredWords.join(' ');
@@ -257,9 +252,9 @@ useEffect(() => {
   return (
     <View>
       <View>
-        <Text style={styles.text}>Dictée vocale</Text>
-        <Button title="click here to initialize" onPress={() => {
-  stopListeningAndResetRefs(); // Ajoutez cet appel avant de changer de page
+        <Text style={styles.text}>Command</Text>
+        <Button title="Initialize before anything" onPress={() => {
+  stopListeningAndResetRefs(); 
 }} />
       <TouchableOpacity
         style={styles.voiceButton}
@@ -271,14 +266,14 @@ useEffect(() => {
           }
         }}
       >
-         <Text style={styles.voiceButtonText}>{isListening ? 'Arrêter' : 'Démarrer'}</Text>
+         <Text style={styles.voiceButtonText}>{isListening ? 'Stop' : 'Start'}</Text>
       </TouchableOpacity>
       <Text >{transcription}</Text>
 
 
           {reportmemberref.current && (
   <View>
-    <Text style={styles.transcription}>Veuillez prononcer l'id du member qui doit être report.</Text>
+    <Text style={styles.transcription}>ID of member reported</Text>
     <Text style={styles.activity}>{memberidaudio}</Text>
     <Button title="report member audio" onPress={() => handleReportMember} />
   </View>

@@ -1,12 +1,17 @@
+// Importing required libraries and modules from React Native and other dependencies
 import React, { useState, useEffect, useRef } from 'react';
-import { View, FlatList, Text, Button, TextInput, Image, Alert,ScrollView ,StyleSheet,TouchableOpacity} from 'react-native';
+import { View, FlatList, Text, Button, TextInput, Image, Alert, ScrollView, StyleSheet, TouchableOpacity } from 'react-native';
 import { useSelector } from 'react-redux';
 import axios from 'axios';
 import { check, PERMISSIONS, RESULTS, request, openSettings } from 'react-native-permissions';
 import Voice from '@react-native-community/voice';
-const rootUrl = 'https://q-rious.fr'; // Remplacez par votre URL racine
 
-const MediaScreen  =({ navigation }) => {
+// Set the root URL for API requests
+const rootUrl = 'https://q-rious.fr'; // Replace this with your root URL
+
+// MediaScreen component definition
+const MediaScreen = ({ navigation }) => {
+  // State variables using useState hook to manage various data in the component
   const [albums, setAlbums] = useState([]);
   const [photos, setPhotos] = useState([]);
   const [mediaDetails, setMediaDetails] = useState([]);
@@ -15,32 +20,36 @@ const MediaScreen  =({ navigation }) => {
   const [newAlbumTitle, setNewAlbumTitle] = useState('');
   const [newAlbumPrivacy, setNewAlbumPrivacy] = useState('public');
 
-  const token = useSelector(state => state.token);
-  const isAdmin = useSelector((state) => state.isAdmin); // Get the isAdmin flag from Redux state
+  // Get the token and isAdmin flag from Redux state using useSelector
+  const token = useSelector((state) => state.token);
+  const isAdmin = useSelector((state) => state.isAdmin);
 
+  // State variables to manage voice recognition and execution of voice commands
   const [isCommandExecuting, setIsCommandExecuting] = useState(false);
   const [isListening, setIsListening] = useState(false);
   const [transcription, setTranscription] = useState('');
 
+  // Refs to keep track of various processes during voice recognition
   const albumCreatingRef = useRef(false);
   const deleteAlbumaudio = useRef(false);
-  const[albumidaudio,setalbumidaudio] = useState('');
+  const [albumidaudio, setalbumidaudio] = useState('');
   const deletephotoaudio = useRef(false);
-  const[photoidaudio,setphotoidaudio] = useState('');
+  const [photoidaudio, setphotoidaudio] = useState('');
 
-
-
+  // Headers for API requests with authorization token
   const headers = {
     'Content-Type': 'application/json',
     'Authorization': `Bearer ${token}`
   };
+
+  // Function to check and request RECORD_AUDIO permission before starting voice recognition
   const checkPermissionAndStart = async () => {
     const checkPermission = await check(PERMISSIONS.ANDROID.RECORD_AUDIO);
 
     switch (checkPermission) {
       case RESULTS.UNAVAILABLE:
         console.log('This feature is not available (on this device / in this context)');
-        // Informer l'utilisateur que la fonctionnalité n'est pas disponible
+        // Inform the user that the feature is not available
         break;
       case RESULTS.DENIED:
         console.log('The permission has not been requested / is denied but requestable');
@@ -48,7 +57,7 @@ const MediaScreen  =({ navigation }) => {
         if (requestPermission === RESULTS.GRANTED) {
           startListening();
         } else {
-          // L'utilisateur a refusé l'autorisation, afficher un message expliquant pourquoi l'autorisation est nécessaire
+          // User denied the permission, show a message explaining why the permission is necessary
         }
         break;
       case RESULTS.GRANTED:
@@ -57,20 +66,22 @@ const MediaScreen  =({ navigation }) => {
         break;
       case RESULTS.BLOCKED:
         console.log('The permission is denied and not requestable anymore');
-        // Si l'autorisation est bloquée, demander à l'utilisateur d'ouvrir les paramètres de l'application et d'autoriser l'accès manuellement
+        // If the permission is blocked, prompt the user to open app settings and manually grant access
         openSettings().catch(() => console.warn('Cannot open settings'));
         break;
     }
   };
+
+  // Function to convert words to numbers (e.g., convert "one" to 1)
   function convertWordToNumber(word) {
     const numberWords = {
       zero: 0, one: 1, two: 2, three: 3, four: 4,
       five: 5, six: 6, seven: 7, eight: 8, nine: 9
     };
-  
+
     const words = word.trim().toLowerCase().split(' ');
-  
-    // Check for both numeric and word representation of numbers
+
+    // Check for both numeric and word representations of numbers
     let convertedNumbers = words.map(word => {
       if (!isNaN(word)) {
         return parseInt(word);
@@ -78,8 +89,8 @@ const MediaScreen  =({ navigation }) => {
         return numberWords[word] || word; // Use the word as is if not found in the numberWords dictionary
       }
     });
-  
-    // If there is a single number, return it, otherwise, return the whole array of words
+
+    // If there is a single number, return it; otherwise, return the whole array of words
     if (convertedNumbers.length === 1) {
       return convertedNumbers[0];
     } else {
@@ -88,60 +99,58 @@ const MediaScreen  =({ navigation }) => {
     }
   }
 
+  // Dictionary of voice commands and their corresponding functions
   const commands = {
     'créer album': () => {
       if (!albumCreatingRef.current) {
         albumCreatingRef.current = true;
-        console.log('Creating folder dans command:', albumCreatingRef.current);
-    
+        console.log('Creating folder in command:', albumCreatingRef.current);
       }
-
     },
     'supprimer album': () => {
       if (!deleteAlbumaudio.current) {
         deleteAlbumaudio.current = true;
-        console.log('Creating folder dans command:', deleteAlbumaudio.current);
-    
+        console.log('Creating folder in command:', deleteAlbumaudio.current);
       }
-
     },
     'supprimer photos': () => {
       if (!deletephotoaudio.current) {
         deletephotoaudio.current = true;
-        console.log('Creating folder dans command:', deletephotoaudio.current);
-    
+        console.log('Creating folder in command:', deletephotoaudio.current);
       }
     },
-
-
   };
 
+  // Function to execute a voice command
+  const executeCommand = (command) => {
+    setIsCommandExecuting(true);
+    command();
+    setIsCommandExecuting(false);
+  };
 
-const executeCommand = (command) => {
-  setIsCommandExecuting(true);
-  command();
-  setIsCommandExecuting(false);
-};
-const startListening = async () => {
-  try {
-    setIsListening(true);
-    setTranscription('');
-    await Voice.start('fr-FR'); // pour français
-  } catch (e) {
-    console.error(e);
-  }
-};
+  // Function to start voice recognition
+  const startListening = async () => {
+    try {
+      setIsListening(true);
+      setTranscription('');
+      await Voice.start('fr-FR'); // for French language, change the language code as needed
+    } catch (e) {
+      console.error(e);
+    }
+  };
 
-const stopListening = async () => {
-  try {
-    setIsListening(false);
-    await Voice.stop();
-  } catch (e) {
-    console.error(e);
-  }
-};
+  // Function to stop voice recognition
+  const stopListening = async () => {
+    try {
+      setIsListening(false);
+      await Voice.stop();
+    } catch (e) {
+      console.error(e);
+    }
+  };
 
-function levenshteinDistance(a, b) {
+  // Function to calculate Levenshtein distance between two strings
+  function levenshteinDistance(a, b) {
   const matrix = [];
 
   // Increment along the first column of each row
@@ -167,123 +176,124 @@ function levenshteinDistance(a, b) {
 
   return matrix[b.length][a.length];
 }
+// Event listener for voice recognition results
+Voice.onSpeechResults = (e) => {
+  let speech = e.value ? e.value.join(' ') : '';
 
-  Voice.onSpeechResults = (e) => {
-    let speech = e.value ? e.value.join(' ') : '';
+  // Filtering the speech
+  speech = speech.trim(); // Remove leading and trailing spaces
+  speech = speech.replace(/\s+/g, ' '); // Remove multiple spaces
+  speech = speech.toLowerCase(); // Convert to lowercase for easy command matching
 
-    // Filtrage du discours
-    speech = speech.trim(); // Supprimer les espaces avant et après
-    speech = speech.replace(/\s+/g, ' '); // Supprimer les espaces multiples
-    speech = speech.toLowerCase(); // Convertir en minuscules pour faciliter la correspondance des commandes
+  // Keeping only the first word of each sequence of similar words
+  const words = speech.split(' ');
+  const filteredWords = words.filter((word, index, self) => {
+    // Return true if the word is the first of its sequence of similar words
+    return index === self.findIndex(otherWord => levenshteinDistance(word, otherWord) / Math.max(word.length, otherWord.length) <= 0.5);
+  });
+  speech = filteredWords.join(' ');
+  speech = convertWordToNumber(speech);
 
-    // Garder seulement le premier mot de chaque séquence de mots similaires
-    const words = speech.split(' ');
-    const filteredWords = words.filter((word, index, self) => {
-      // Retourner true si le mot est le premier de sa séquence de mots similaires
-      return index === self.findIndex(otherWord => levenshteinDistance(word, otherWord) / Math.max(word.length, otherWord.length) <= 0.5);
-    });
-    speech = filteredWords.join(' ');
-    speech = convertWordToNumber(speech);
+  // Handling specific commands using the dictionary of commands
+  if (albumCreatingRef.current) {
+    console.log('albumCreating is true in result:', newAlbumTitle);
+    console.log('albumCreatingRef.current is true in result');
+    setNewAlbumTitle(speech);
+    console.log('Content:', newAlbumTitle);
+  }
 
-    if (albumCreatingRef.current) {
-      console.log('activitycreating est vrai dans result  :', newAlbumTitle);
-      console.log('activityCreating2 est vrai dans result');
-      setNewAlbumTitle(speech);
-      console.log('Content  :', newAlbumTitle);
+  if (deleteAlbumaudio.current) {
+    console.log('deleteAlbumaudio is true in result:', albumidaudio);
+    console.log('deleteAlbumaudio.current is true in result');
+    setalbumidaudio(speech);
+    console.log('Content:', albumidaudio);
+  }
 
-    }
+  if (deletephotoaudio.current) {
+    console.log('deletephotoaudio is true in result:', photoidaudio);
+    console.log('deletephotoaudio.current is true in result');
+    setphotoidaudio(speech);
+    console.log('Content:', photoidaudio);
+  }
 
-    if(deleteAlbumaudio.current){
-      console.log('activitycreating est vrai dans result  :', albumidaudio);
-      console.log('activityCreating2 est vrai dans result');
-      setalbumidaudio(speech);
-      console.log('Content  :', albumidaudio);
+  setTranscription(speech);
 
-    }
-    if(deletephotoaudio.current){
-      console.log('activitycreating est vrai dans result  :', photoidaudio);
-      console.log('activityCreating2 est vrai dans result');
-      setphotoidaudio(speech);
-      console.log('Content  :', photoidaudio);
+  // Execute the command function if it exists in the dictionary of commands
+  const commandFunc = commands[speech];
+  if (commandFunc) {
+    executeCommand(commandFunc);
+  }
+};
 
-    }
-   
+// Function to reset various state variables and refs for voice recognition
+const Initialisation = async () => {
+  albumCreatingRef.current = false;
+  deleteAlbumaudio.current = false;
+  deletephotoaudio.current = false;
 
-    setTranscription(speech);
+  setcurrentContentaudio('');
+  setNewAlbumTitle('');
+  setalbumidaudio('');
+  setphotoidaudio('');
+};
 
-
-      const commandFunc = commands[speech];
-      if (commandFunc) {
-        executeCommand(commandFunc);
-      }
-
-  };
-  const Initialisation = async () => {
-    albumCreatingRef.current = false;
-    deleteAlbumaudio.current = false;
-    deletephotoaudio.current = false;
-   
-    setcurrentContentaudio('');
-    setNewAlbumTitle('');
-    setalbumidaudio('');
-    setphotoidaudio('');
-
-}
-
+// Fetch albums, photos, and media details from the API
 useEffect(() => {
   if (!token) {
     navigation.navigate('Login');
   } else {
     fetchAlbums();
     fetchPhotos();
-    fetchMediaDetails(); 
+    fetchMediaDetails();
     Voice.destroy().then(Voice.removeAllListeners);
+  }
+}, [token, navigation, albumCreatingRef.current, deleteAlbumaudio.current, deletephotoaudio.current]);
 
-   }
-}, [token, navigation,albumCreatingRef.current,deleteAlbumaudio.current,deletephotoaudio.current,]);
-
+// Clean up the Voice instance when the component is unmounted
 useEffect(() => {
   return () => {
     Voice.destroy().then(Voice.removeAllListeners);
   };
 }, []);
 
-  const fetchAlbums = async () => {
-        setIsLoading(true);
+// Fetch the list of albums from the API
+const fetchAlbums = async () => {
+  setIsLoading(true);
 
-    try {
-      const response = await axios.get(`${rootUrl}/wp-json/buddyboss/v1/media/albums/`);
-      setAlbums(response.data);
-          setIsLoading(false);
+  try {
+    const response = await axios.get(`${rootUrl}/wp-json/buddyboss/v1/media/albums/`);
+    setAlbums(response.data);
+    setIsLoading(false);
+  } catch (error) {
+    console.error('Error fetching albums:', error);
+    setError('Failed to fetch albums. Please try again.');
+  }
+};
 
-    } catch (error) {
-      console.error('Error fetching albums:', error);
-      setError('Failed to fetch albums. Please try again.');
-    }
-  };
+// Fetch the list of photos from the API
+const fetchPhotos = async () => {
+  try {
+    const response = await axios.get(`${rootUrl}/wp-json/buddyboss/v1/media/`);
+    setPhotos(response.data);
+  } catch (error) {
+    console.error('Error fetching photos:', error);
+    setError('Failed to fetch photos. Please try again.');
+  }
+};
 
-  const fetchPhotos = async () => {
-    try {
-      const response = await axios.get(`${rootUrl}/wp-json/buddyboss/v1/media/`);
-      setPhotos(response.data);
-    } catch (error) {
-      console.error('Error fetching photos:', error);
-      setError('Failed to fetch photos. Please try again.');
-    }
-  };
+// Fetch media details from the API
+const fetchMediaDetails = async () => {
+  try {
+    const response = await axios.get(`${rootUrl}/wp-json/buddyboss/v1/media/details`);
+    setMediaDetails(response.data);
+  } catch (error) {
+    console.error('Error fetching media details:', error);
+    setError('Failed to fetch media details. Please try again.');
+  }
+};
 
-  const fetchMediaDetails = async () => {
-    try {
-      const response = await axios.get(`${rootUrl}/wp-json/buddyboss/v1/media/details`);
-      setMediaDetails(response.data);
-    } catch (error) {
-      console.error('Error fetching media details:', error);
-      setError('Failed to fetch media details. Please try again.');
-    }
-  };
-
-
- const handleCreateAlbum = async () => {
+// Function to handle the creation of a new album
+const handleCreateAlbum = async () => {
   try {
     const data = {
       title: newAlbumTitle,
@@ -295,65 +305,71 @@ useEffect(() => {
     setNewAlbumTitle('');
     fetchAlbums();
   } catch (error) {
-    Alert.alert('Error', 'Failed to create album. Please try again.');
+    Alert.alert('Error', 'Failed to create the album. Please try again.');
     console.error(error);
   }
 };
 
- const handleDeleteAlbum = async (albumId) => {
+// Function to handle the deletion of an album
+const handleDeleteAlbum = async (albumId) => {
   try {
     const response = await axios.delete(`${rootUrl}/wp-json/buddyboss/v1/media/albums/${albumId}`, { headers });
     if (response.data.deleted) {
       Alert.alert('Success', 'Album deleted successfully.');
       fetchAlbums();
     } else {
-      throw new Error('Failed to delete album.');
+      throw new Error('Failed to delete the album.');
     }
   } catch (error) {
-    Alert.alert('Error', 'Failed to delete album. Please try again.');
+    Alert.alert('Error', 'Failed to delete the album. Please try again.');
     console.error(error);
   }
 };
 
- const  handleDeletePhoto = async (photoId) => {
+// Function to handle the deletion of a photo
+const handleDeletePhoto = async (photoId) => {
   try {
     const response = await axios.delete(`${rootUrl}/wp-json/buddyboss/v1/media/${photoId}`, { headers });
     if (response.data.deleted) {
-     Alert.alert('Success', 'Photo deleted successfully.');
+      Alert.alert('Success', 'Photo deleted successfully.');
       fetchPhotos();
     } else {
-      throw new Error('Failed to delete photo.');
+      throw new Error('Failed to delete the photo.');
     }
   } catch (error) {
-    Alert.alert('Error', 'Failed to delete photo. Please try again.');
+    Alert.alert('Error', 'Failed to delete the photo. Please try again.');
     console.error(error);
   }
 };
 
+// Function to stop voice recognition and reset refs
 const stopListeningAndResetRefs = () => {
   stopListening();
   Initialisation();
 };
- const handleUpdateAlbumTitle = async (albumId) => {
+
+// Function to handle updating the title of an album
+const handleUpdateAlbumTitle = async (albumId) => {
   try {
     const data = {
       id: albumId,
       title: newAlbumTitle
     };
 
-    const response = await axios.patch(`${rootUrl}/wp-json/buddyboss/v1/media/albums/${albumId}`, data, { headers});
+    const response = await axios.patch(`${rootUrl}/wp-json/buddyboss/v1/media/albums/${albumId}`, data, { headers });
     if (response.data.updated) {
       Alert.alert('Success', 'Album title updated successfully.');
       setNewAlbumTitle('');
       fetchAlbums();
     } else {
-      throw new Error('Failed to update album title.');
+      throw new Error('Failed to update the album title.');
     }
   } catch (error) {
-    Alert.alert('Error', 'Failed to update album title. Please try again.');
+    Alert.alert('Error', 'Failed to update the album title. Please try again.');
     console.error(error);
   }
 };
+
 
 if(!isAdmin){
   return (
@@ -382,11 +398,11 @@ if(!isAdmin){
 
   return (
     <ScrollView contentContainerStyle={{ flexGrow: 1}}>
-  <Button title="click here to initialize" onPress={() => {
+  <Button title="Initialize before anything" onPress={() => {
   stopListeningAndResetRefs(); // Ajoutez cet appel avant de changer de page
 }} />
       <View>
-       <Text style={styles.text}>Dictée vocale</Text>
+       <Text style={styles.text}>Command</Text>
       <TouchableOpacity
         style={styles.voiceButton}
         onPress={() => {
@@ -397,34 +413,34 @@ if(!isAdmin){
           }
         }}
       >
-         <Text style={styles.voiceButtonText}>{isListening ? 'Arrêter' : 'Démarrer'}</Text>
+         <Text style={styles.voiceButtonText}>{isListening ? 'Stop' : 'Start'}</Text>
       </TouchableOpacity>
       <Text >{transcription}</Text>
 
           {albumCreatingRef.current && (
   <View>
-    <Text style={styles.transcription}>Veuillez prononcer le titre du album.</Text>
+    <Text style={styles.transcription}>Title of Album:</Text>
     <Text style={styles.activity}>{newAlbumTitle}</Text>
     <TouchableOpacity style={styles.confirmButton} onPress={handleCreateAlbum}>
-      <Text style={styles.confirmButtonText}>Confirmer</Text>
+      <Text style={styles.confirmButtonText}>Confirm</Text>
     </TouchableOpacity>
     <TouchableOpacity style={styles.confirmButton} onPress={Initialisation}>
-      <Text style={styles.confirmButtonText}>Initialiser</Text>
+      <Text style={styles.confirmButtonText}>Initialize</Text>
     </TouchableOpacity>
     </View>
 )}
 {deleteAlbumaudio.current && (
   <View>
-    <Text style={styles.transcription}>Veuillez prononcer l'id de l'album qui doit être Supprimer.</Text>
+    <Text style={styles.transcription}>ID of album delete</Text>
     <Text style={styles.activity}>{albumidaudio}</Text>
     <Button title="Delete album audio" onPress={() => handleDeleteAlbum(albumidaudio)} />
   </View>
 )}
 {deletephotoaudio.current && (
   <View>
-    <Text style={styles.transcription}>Veuillez prononcer l'id de la photo qui doit être Supprimer.</Text>
+    <Text style={styles.transcription}>ID of picture delete</Text>
     <Text style={styles.activity}>{photoidaudio}</Text>
-    <Button title="Delete photo audio" onPress={() => handleDeletePhoto(photoidaudio)} />
+    <Button title="Delete picture audio" onPress={() => handleDeletePhoto(photoidaudio)} />
   </View>
 )}
 

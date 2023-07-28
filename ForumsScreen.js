@@ -4,6 +4,7 @@ import { useSelector } from 'react-redux';
 import axios from 'axios';
 
 const ForumsScreen = ({ navigation }) => {
+  // State variables to store data
   const [forums, setForums] = useState([]);
   const [topics, setTopics] = useState([]);
   const [replies, setReplies] = useState([]);
@@ -17,25 +18,30 @@ const ForumsScreen = ({ navigation }) => {
   const [replyBbpMedia, setReplyBbpMedia] = useState({});
   const [replyBbpMediaGif, setReplyBbpMediaGif] = useState({});
   const [topicTitle, setTopicTitle] = useState('');
-const [topicContent, setTopicContent] = useState('');
-const [mergeTopicId, setMergeTopicId] = useState('');
-const [destinationTopicId, setDestinationTopicId] = useState('');
-const [updatedTitle, setUpdatedTitle] = useState('');
-const [updatedContent, setUpdatedContent] = useState('');
-  
+  const [topicContent, setTopicContent] = useState('');
+  const [mergeTopicId, setMergeTopicId] = useState('');
+  const [destinationTopicId, setDestinationTopicId] = useState('');
+  const [updatedTitle, setUpdatedTitle] = useState('');
+  const [updatedContent, setUpdatedContent] = useState('');
+
+  // Get the authentication token from Redux state
   const token = useSelector(state => state.token);
 
+  // Define headers for API requests with authorization token
   const headers = {
     'Content-Type': 'application/json',
     'Authorization': `Bearer ${token}`
   };
 
+  // Check if the user is logged in before rendering the component
   useEffect(() => {
     if (!token) {
+      // If the user is not logged in, navigate to the Login screen
       navigation.navigate('Login');
     }
   }, [token, navigation]);
 
+  // Function to fetch forum data from the API
   const fetchForums = async () => {
     setIsLoading(true);
     try {
@@ -48,6 +54,7 @@ const [updatedContent, setUpdatedContent] = useState('');
     }
   };
 
+  // Function to fetch topic data from the API
   const fetchTopics = async () => {
     setIsLoading(true);
     try {
@@ -60,6 +67,7 @@ const [updatedContent, setUpdatedContent] = useState('');
     }
   };
 
+  // Function to fetch reply data from the API
   const fetchReplies = async () => {
     setIsLoading(true);
     try {
@@ -71,7 +79,8 @@ const [updatedContent, setUpdatedContent] = useState('');
       setIsLoading(false);
     }
   };
-  
+
+  // Function to edit a reply
   const editReply = async (replyId, content, topicId) => {
     setIsLoading(true);
     try {
@@ -85,7 +94,7 @@ const [updatedContent, setUpdatedContent] = useState('');
         data,
         { headers }
       );
-      // Mettez à jour la réponse modifiée dans votre état
+      // Update the modified reply in your state
       const updatedReplies = replies.map((reply) =>
         reply.id === replyId ? response.data : reply
       );
@@ -96,7 +105,8 @@ const [updatedContent, setUpdatedContent] = useState('');
       setIsLoading(false);
     }
   };
-  
+
+  // Function to update a topic
   const updateTopic = async (topicId, updatedTitle, updatedContent, parentForumId) => {
     setIsLoading(true);
     try {
@@ -107,7 +117,7 @@ const [updatedContent, setUpdatedContent] = useState('');
         parent: parentForumId
       };
       const response = await axios.patch(`https://q-rious.fr/wp-json/buddyboss/v1/topics/${topicId}`, data, { headers });
-      // Mettez à jour le topic modifié dans votre état
+      // Update the modified topic in your state
       const updatedTopics = topics.map((topic) =>
         topic.id === topicId ? response.data : topic
       );
@@ -118,8 +128,8 @@ const [updatedContent, setUpdatedContent] = useState('');
       setIsLoading(false);
     }
   };
-  
-  
+
+  // Function to create a topic
   const createTopic = async (title, content, parent) => {
     setIsLoading(true);
     try {
@@ -136,7 +146,8 @@ const [updatedContent, setUpdatedContent] = useState('');
       setIsLoading(false);
     }
   };
-  
+
+  // Function to merge two topics
   const mergeTopics = async (mergeId, destinationId) => {
     setIsLoading(true);
     try {
@@ -149,7 +160,7 @@ const [updatedContent, setUpdatedContent] = useState('');
         data,
         { headers }
       );
-      // Mettez à jour les topics après la fusion
+      // Update topics after the merge
       const updatedTopics = topics.filter(topic => topic.id !== mergeId);
       setTopics(updatedTopics);
       setIsLoading(false);
@@ -158,8 +169,8 @@ const [updatedContent, setUpdatedContent] = useState('');
       setIsLoading(false);
     }
   };
-  
 
+  // Function to perform an action on a reply
   const performReplyAction = async (replyId, action, value) => {
     setIsLoading(true);
     try {
@@ -173,7 +184,7 @@ const [updatedContent, setUpdatedContent] = useState('');
         data,
         { headers }
       );
-      // Mettez à jour la réponse modifiée dans votre état
+      // Update the modified reply in your state
       const updatedReplies = replies.map((reply) =>
         reply.id === replyId ? response.data : reply
       );
@@ -184,11 +195,13 @@ const [updatedContent, setUpdatedContent] = useState('');
       setIsLoading(false);
     }
   };
+
+  // Function to delete a reply
   const deleteReply = async (replyId) => {
     setIsLoading(true);
     try {
       await axios.delete(`https://q-rious.fr/wp-json/buddyboss/v1/reply/${replyId}`, { headers });
-      // Mettez à jour les réponses en supprimant celle qui a été supprimée
+      // Update replies by removing the deleted one
       const updatedReplies = replies.filter((reply) => reply.id !== replyId);
       setReplies(updatedReplies);
       setIsLoading(false);
@@ -197,11 +210,13 @@ const [updatedContent, setUpdatedContent] = useState('');
       setIsLoading(false);
     }
   };
+
+  // Function to delete a topic
   const deleteTopic = async (topicId) => {
     setIsLoading(true);
     try {
       await axios.delete(`https://q-rious.fr/wp-json/buddyboss/v1/topics/${topicId}`, { headers });
-      // Mettez à jour les topics après la suppression
+      // Update topics after the deletion
       const updatedTopics = topics.filter(topic => topic.id !== topicId);
       setTopics(updatedTopics);
       setIsLoading(false);
@@ -210,8 +225,8 @@ const [updatedContent, setUpdatedContent] = useState('');
       setIsLoading(false);
     }
   };
-  
-  
+
+  // Function to create a reply
   const createReply = async (topicId) => {
     setIsLoading(true);
     try {
@@ -241,12 +256,12 @@ const [updatedContent, setUpdatedContent] = useState('');
     }
   };
 
+  // Fetch initial data when the component mounts
   useEffect(() => {
     fetchForums();
     fetchTopics();
     fetchReplies();
   }, []);
-
 
   const isAdmin = useSelector(state => state.isAdmin);
 

@@ -1,63 +1,71 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, FlatList, Text, Button, TextInput, Image, Alert,ScrollView ,StyleSheet,TouchableOpacity} from 'react-native';
+import { View, FlatList, Text, Button, TextInput, Image, Alert, ScrollView, StyleSheet, TouchableOpacity } from 'react-native';
 import { useSelector } from 'react-redux';
 import axios from 'axios';
 import { check, PERMISSIONS, RESULTS, request, openSettings } from 'react-native-permissions';
 import Voice from '@react-native-community/voice';
-const rootUrl = 'https://q-rious.fr'; // Remplacez par votre URL racine
 
-const GroupesScreen =  ({ navigation }) => {
- const [groupes, setGroupes] = useState([]);
+const rootUrl = 'https://q-rious.fr'; // Replace this with your root URL
+
+const GroupesScreen = ({ navigation }) => {
+  // State variables for managing data
+  const [groupes, setGroupes] = useState([]);
   const [membres, setMembres] = useState({});
   const [groupSettings, setGroupSettings] = useState({});
   const [membersId, setMembersId] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
-  
 
+  // State variables for voice recognition
   const [isCommandExecuting, setIsCommandExecuting] = useState(false);
   const token = useSelector(state => state.token);
   const [isListening, setIsListening] = useState(false);
   const [transcription, setTranscription] = useState('');
 
-    const deletegroup = useRef(false);
-    const [groupidaudio,setgroupidaudio]=useState('');
-    function convertWordToNumber(word) {
-      const numberWords = {
-        zero: 0, one: 1, two: 2, three: 3, four: 4,
-        five: 5, six: 6, seven: 7, eight: 8, nine: 9
-      };
-    
-      const words = word.trim().toLowerCase().split(' ');
-    
-      // Check for both numeric and word representation of numbers
-      let convertedNumbers = words.map(word => {
-        if (!isNaN(word)) {
-          return parseInt(word);
-        } else {
-          return numberWords[word] || word; // Use the word as is if not found in the numberWords dictionary
-        }
-      });
-    
-      // If there is a single number, return it, otherwise, return the whole array of words
-      if (convertedNumbers.length === 1) {
-        return convertedNumbers[0];
+  const deletegroup = useRef(false);
+  const [groupidaudio, setgroupidaudio] = useState('');
+
+  // Utility function to convert words to numbers
+  function convertWordToNumber(word) {
+    const numberWords = {
+      zero: 0, one: 1, two: 2, three: 3, four: 4,
+      five: 5, six: 6, seven: 7, eight: 8, nine: 9
+    };
+
+    const words = word.trim().toLowerCase().split(' ');
+
+    // Check for both numeric and word representation of numbers
+    let convertedNumbers = words.map(word => {
+      if (!isNaN(word)) {
+        return parseInt(word);
       } else {
-        const numericValues = convertedNumbers.filter(val => typeof val === 'number');
-        return numericValues.length === 1 ? numericValues[0] : convertedNumbers.join(' ');
+        return numberWords[word] || word; // Use the word as is if not found in the numberWords dictionary
       }
+    });
+
+    // If there is a single number, return it, otherwise, return the whole array of words
+    if (convertedNumbers.length === 1) {
+      return convertedNumbers[0];
+    } else {
+      const numericValues = convertedNumbers.filter(val => typeof val === 'number');
+      return numericValues.length === 1 ? numericValues[0] : convertedNumbers.join(' ');
     }
+  }
+
+  // Headers for API requests
   const headers = {
     'Content-Type': 'application/json',
     'Authorization': `Bearer ${token}`
   };
+
+  // Function to check permission for microphone and start listening for voice
   const checkPermissionAndStart = async () => {
     const checkPermission = await check(PERMISSIONS.ANDROID.RECORD_AUDIO);
 
     switch (checkPermission) {
       case RESULTS.UNAVAILABLE:
         console.log('This feature is not available (on this device / in this context)');
-        // Informer l'utilisateur que la fonctionnalité n'est pas disponible
+        // Show a message to the user that the feature is not available
         break;
       case RESULTS.DENIED:
         console.log('The permission has not been requested / is denied but requestable');
@@ -65,7 +73,7 @@ const GroupesScreen =  ({ navigation }) => {
         if (requestPermission === RESULTS.GRANTED) {
           startListening();
         } else {
-          // L'utilisateur a refusé l'autorisation, afficher un message expliquant pourquoi l'autorisation est nécessaire
+          // The user denied permission, show a message explaining why permission is required
         }
         break;
       case RESULTS.GRANTED:
@@ -74,50 +82,53 @@ const GroupesScreen =  ({ navigation }) => {
         break;
       case RESULTS.BLOCKED:
         console.log('The permission is denied and not requestable anymore');
-        // Si l'autorisation est bloquée, demander à l'utilisateur d'ouvrir les paramètres de l'application et d'autoriser l'accès manuellement
+        // If permission is blocked, ask the user to open app settings and manually grant access
         openSettings().catch(() => console.warn('Cannot open settings'));
         break;
     }
   };
 
+  // Define a set of voice commands and their corresponding functions
   const commands = {
     'supprimer groupe': () => {
       if (!deletegroup.current) {
         deletegroup.current = true;
         console.log('Creating activity2 dans command:', deletegroup.current);
-    
       }
-
     },
-    
-}
+    // Add more commands here as needed
+  };
 
-const executeCommand = (command) => {
-  setIsCommandExecuting(true);
-  command();
-  setIsCommandExecuting(false);
-};
-const startListening = async () => {
-  try {
-    setIsListening(true);
-    setTranscription('');
-    await Voice.start('fr-FR'); // pour français
-  } catch (e) {
-    console.error(e);
-  }
-};
+  // Function to execute a given command
+  const executeCommand = (command) => {
+    setIsCommandExecuting(true);
+    command();
+    setIsCommandExecuting(false);
+  };
 
-const stopListening = async () => {
-  try {
-    await Voice.stop();
-    setIsListening(false);
+  // Function to start listening for voice input
+  const startListening = async () => {
+    try {
+      setIsListening(true);
+      setTranscription('');
+      await Voice.start('fr-FR'); // for French language, change to your desired language
+    } catch (e) {
+      console.error(e);
+    }
+  };
 
-  } catch (e) {
-    console.error(e);
-  }
-};
+  // Function to stop listening for voice input
+  const stopListening = async () => {
+    try {
+      await Voice.stop();
+      setIsListening(false);
+    } catch (e) {
+      console.error(e);
+    }
+  };
 
-function levenshteinDistance(a, b) {
+  // Function to calculate the Levenshtein distance between two strings
+  function levenshteinDistance(a, b) {
   const matrix = [];
 
   // Increment along the first column of each row
@@ -143,53 +154,54 @@ function levenshteinDistance(a, b) {
 
   return matrix[b.length][a.length];
 }
+// Event handler for speech recognition results
+Voice.onSpeechResults = (e) => {
+  let speech = e.value ? e.value.join(' ') : '';
 
-  Voice.onSpeechResults = (e) => {
-    let speech = e.value ? e.value.join(' ') : '';
+  // Filtering the speech
+  speech = speech.trim(); // Remove leading and trailing spaces
+  speech = speech.replace(/\s+/g, ' '); // Remove multiple spaces
+  speech = speech.toLowerCase(); // Convert to lowercase for easier command matching
 
-    // Filtrage du discours
-    speech = speech.trim(); // Supprimer les espaces avant et après
-    speech = speech.replace(/\s+/g, ' '); // Supprimer les espaces multiples
-    speech = speech.toLowerCase(); // Convertir en minuscules pour faciliter la correspondance des commandes
+  // Keep only the first word of each similar word sequence
+  const words = speech.split(' ');
+  const filteredWords = words.filter((word, index, self) => {
+    // Return true if the word is the first of its similar word sequence
+    return index === self.findIndex(otherWord => levenshteinDistance(word, otherWord) / Math.max(word.length, otherWord.length) <= 0.5);
+  });
+  speech = filteredWords.join(' ');
+  speech = convertWordToNumber(speech);
 
-    // Garder seulement le premier mot de chaque séquence de mots similaires
-    const words = speech.split(' ');
-    const filteredWords = words.filter((word, index, self) => {
-      // Retourner true si le mot est le premier de sa séquence de mots similaires
-      return index === self.findIndex(otherWord => levenshteinDistance(word, otherWord) / Math.max(word.length, otherWord.length) <= 0.5);
-    });
-    speech = filteredWords.join(' ');
-    speech = convertWordToNumber(speech);
+  // Handle specific commands
+  if (deletegroup.current) {
+    console.log('activitycreating est vrai dans result  :', groupidaudio);
+    console.log('activityCreating2 est vrai dans result');
+    setgroupidaudio(speech);
+    console.log('Content  :', groupidaudio);
+  }
 
+  setTranscription(speech);
 
-    if (deletegroup.current) {
-      console.log('activitycreating est vrai dans result  :', groupidaudio);
-      console.log('activityCreating2 est vrai dans result');
-      setgroupidaudio(speech);
-      console.log('Content  :', groupidaudio);
+  // Check if the voice command matches any of the predefined commands
+  const commandFunc = commands[speech];
+  if (commandFunc) {
+    executeCommand(commandFunc);
+  }
+};
 
-    }
+// Function to initialize state variables when starting voice recognition
+const Initialisation = async () => {
+  deletegroup.current = false;
+  setgroupidaudio('');
+};
 
-
-    setTranscription(speech);
-
-
-      const commandFunc = commands[speech];
-      if (commandFunc) {
-        executeCommand(commandFunc);
-      }
-
-  };
-  const Initialisation = async () => {
-    deletegroup.current = false;
-    setgroupidaudio('');
-
-
-}
+// Function to stop listening and reset references
 const stopListeningAndResetRefs = () => {
   stopListening();
   Initialisation();
 };
+
+// Effect hook to check if the user is logged in and fetch group data
 useEffect(() => {
   if (!token) {
     navigation.navigate('Login');
@@ -197,14 +209,16 @@ useEffect(() => {
     fetchGroupes();
     Voice.destroy().then(Voice.removeAllListeners);
   }
-}, [token, navigation,deletegroup.current]);
+}, [token, navigation, deletegroup.current]);
+
+// Effect hook to clean up listeners when the component unmounts
 useEffect(() => {
   return () => {
     Voice.destroy().then(Voice.removeAllListeners);
   };
 }, []);
 
-
+// Function to delete a group
 const deleteGroup = async (groupId) => {
   try {
     const response = await axios.delete(`${rootUrl}/wp-json/buddyboss/v1/groups/${groupId}`, {
@@ -214,9 +228,10 @@ const deleteGroup = async (groupId) => {
       },
       headers,
     });
-    // Vérifiez la réponse pour voir si la suppression a réussi
+
+    // Check the response to see if the deletion was successful
     if (response.data.deleted) {
-      // Supprimez le groupe de la liste des groupes
+      // Remove the group from the list of groups
       setGroupes((prevGroupes) => prevGroupes.filter((groupe) => groupe.id !== groupId));
       Alert.alert('Group Deleted', 'The group has been successfully deleted.');
     } else {
@@ -228,93 +243,97 @@ const deleteGroup = async (groupId) => {
   }
 };
 
+// Function to fetch groups data from the API
+const fetchGroupes = async () => {
+  try {
+    const response = await fetch(`${rootUrl}/wp-json/buddyboss/v1/groups/`);
+    const data = await response.json();
 
-  const fetchGroupes = async () => {
-    try {
-      const response = await fetch(`${rootUrl}/wp-json/buddyboss/v1/groups/`);
-      const data = await response.json();
-      const groupesWithDetails = await Promise.all(
-        data.map(async (groupe) => {
-          const details = await fetchDetails(groupe.id);
-          const settings = await fetchGroupSettings(groupe.id);
-          return { ...groupe, details, settings };
-        })
-      );
-      setGroupes(groupesWithDetails);
-    } catch (error) {
-      console.error('Error fetching groupes:', error);
-      setGroupes([]);
-    }
-  };
+    // Fetch additional details and settings for each group in parallel
+    const groupesWithDetails = await Promise.all(
+      data.map(async (groupe) => {
+        const details = await fetchDetails(groupe.id);
+        const settings = await fetchGroupSettings(groupe.id);
+        return { ...groupe, details, settings };
+      })
+    );
 
-  const fetchDetails = async (groupId) => {
-    try {
-      const response = await fetch(`${rootUrl}/wp-json/buddyboss/v1/groups/${groupId}/detail`);
-      const data = await response.json();
-      return data.tabs;
-    } catch (error) {
-      console.error('Error fetching group details:', error);
-      return [];
-    }
-  };
+    setGroupes(groupesWithDetails);
+  } catch (error) {
+    console.error('Error fetching groupes:', error);
+    setGroupes([]);
+  }
+};
 
-  const fetchGroupSettings = async (groupId) => {
-    try {
-      const response = await fetch(`${rootUrl}/wp-json/buddyboss/v1/groups/${groupId}/settings?id=${groupId}&nav=group-settings`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-      const data = await response.json();
-      return data;
-    } catch (error) {
-      console.error('Error fetching group settings:', error);
-      return {};
-    }
-  };
-  
+// Function to fetch group details from the API
+const fetchDetails = async (groupId) => {
+  try {
+    const response = await fetch(`${rootUrl}/wp-json/buddyboss/v1/groups/${groupId}/detail`);
+    const data = await response.json();
+    return data.tabs;
+  } catch (error) {
+    console.error('Error fetching group details:', error);
+    return [];
+  }
+};
 
-  const fetchMembres = async (groupId) => {
-    try {
-      const response = await fetch(`${rootUrl}/wp-json/buddyboss/v1/groups/${groupId}/members`);
-      const data = await response.json();
-      setMembres((prevMembres) => ({
-        ...prevMembres,
-        [groupId]: data,
-      }));
-    } catch (error) {
-      console.error('Error fetching group members:', error);
-      setMembres((prevMembres) => ({
-        ...prevMembres,
-        [groupId]: [],
-      }));
-    }
-  };
+// Function to fetch group settings from the API
+const fetchGroupSettings = async (groupId) => {
+  try {
+    const response = await fetch(`${rootUrl}/wp-json/buddyboss/v1/groups/${groupId}/settings?id=${groupId}&nav=group-settings`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error('Error fetching group settings:', error);
+    return {};
+  }
+};
 
-  const addMembers = async (groupe_id, members_id) => {
-    setIsLoading(true);
-    try {
-      const data = {
-        groupe_id: groupe_id,
-        user_id: members_id,
-      };
-      const response = await axios.post(`${rootUrl}/wp-json/buddyboss/v1/groups/${groupe_id}/members`, data, { headers });
-      setIsLoading(false);
-      setMembres((prevMembres) => ({
-        ...prevMembres,
-        [groupe_id]: [...(prevMembres[groupe_id] || []), response.data],
-      }));
-      Alert.alert('Member Added', 'The member has been successfully added to the group.');
-    } catch (error) {
-      setError(error);
-      setIsLoading(false);
-      Alert.alert('Error', 'Failed to add member. Please try again.');
-    }
-  };
-  
+// Function to fetch group members from the API
+const fetchMembres = async (groupId) => {
+  try {
+    const response = await fetch(`${rootUrl}/wp-json/buddyboss/v1/groups/${groupId}/members`);
+    const data = await response.json();
+    setMembres((prevMembres) => ({
+      ...prevMembres,
+      [groupId]: data,
+    }));
+  } catch (error) {
+    console.error('Error fetching group members:', error);
+    setMembres((prevMembres) => ({
+      ...prevMembres,
+      [groupId]: [],
+    }));
+  }
+};
 
-  
+// Function to add a member to a group
+const addMembers = async (groupe_id, members_id) => {
+  setIsLoading(true);
+  try {
+    const data = {
+      groupe_id: groupe_id,
+      user_id: members_id,
+    };
+    const response = await axios.post(`${rootUrl}/wp-json/buddyboss/v1/groups/${groupe_id}/members`, data, { headers });
+    setIsLoading(false);
+    setMembres((prevMembres) => ({
+      ...prevMembres,
+      [groupe_id]: [...(prevMembres[groupe_id] || []), response.data],
+    }));
+    Alert.alert('Member Added', 'The member has been successfully added to the group.');
+  } catch (error) {
+    setError(error);
+    setIsLoading(false);
+    Alert.alert('Error', 'Failed to add member. Please try again.');
+  }
+};
+
 
   const styles = StyleSheet.create({
     boldText: {
@@ -446,11 +465,11 @@ const deleteGroup = async (groupId) => {
 
   return (
     <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
- <Button title="click here to initialize" onPress={() => {
+ <Button title="Initialize before anything" onPress={() => {
   stopListeningAndResetRefs(); // Ajoutez cet appel avant de changer de page
 }} />
       <View>
-       <Text style={styles.text}>Dictée vocale</Text>
+       <Text style={styles.text}>Command</Text>
       <TouchableOpacity
         style={styles.voiceButton}
         onPress={() => {
@@ -461,13 +480,13 @@ const deleteGroup = async (groupId) => {
           }
         }}
       >
-         <Text style={styles.voiceButtonText}>{isListening ? 'Arrêter' : 'Démarrer'}</Text>
+         <Text style={styles.voiceButtonText}>{isListening ? 'Stop' : 'Start'}</Text>
       </TouchableOpacity>
       <Text >{transcription}</Text>
   
           {deletegroup.current && (
   <View>
-    <Text style={styles.transcription}>Veuillez prononcer l'id du groupe qui doit être Supprimer.</Text>
+    <Text style={styles.transcription}>ID of group delete</Text>
     <Text style={styles.activity}>{groupidaudio}</Text>
     <Button title="Delete group audio" onPress={() => deleteGroup(groupidaudio)} />
   </View>

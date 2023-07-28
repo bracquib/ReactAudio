@@ -1,10 +1,12 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { View, Text, Button, TextInput, Alert, ScrollView ,StyleSheet,TouchableOpacity} from 'react-native';
+import { View, Text, Button, TextInput, Alert, ScrollView, StyleSheet, TouchableOpacity } from 'react-native';
 import { useSelector } from 'react-redux';
 import axios from 'axios';
 import { check, PERMISSIONS, RESULTS, request, openSettings } from 'react-native-permissions';
 import Voice from '@react-native-community/voice';
+
 const CreateDocuments = ({ navigation }) => {
+  // State variables
   const [documents, setDocuments] = useState([]);
   const [folders, setFolders] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -15,50 +17,55 @@ const CreateDocuments = ({ navigation }) => {
   const [isListening, setIsListening] = useState(false);
   const [transcription, setTranscription] = useState('');
 
+  // Refs to track if document or folder delete action is being performed
   const docdelete = useRef(false);
-  const [DocumentIdaudio, setDocumentIdaudio] = useState(''); // Ajouté
   const folderdelete = useRef(false);
-  const [folderIdaudio, setfolderIdaudio] = useState(''); // Ajouté
 
-// Function to convert words to numbers
-function convertWordToNumber(word) {
-  const numberWords = {
-    zero: 0, one: 1, two: 2, three: 3, four: 4,
-    five: 5, six: 6, seven: 7, eight: 8, nine: 9
-  };
+  // State variables to store the audio content of document and folder IDs (added for voice recognition)
+  const [DocumentIdaudio, setDocumentIdaudio] = useState('');
+  const [folderIdaudio, setfolderIdaudio] = useState('');
 
-  const words = word.trim().toLowerCase().split(' ');
+  // Function to convert words to numbers
+  function convertWordToNumber(word) {
+    const numberWords = {
+      zero: 0, one: 1, two: 2, three: 3, four: 4,
+      five: 5, six: 6, seven: 7, eight: 8, nine: 9
+    };
 
-  // Check for both numeric and word representation of numbers
-  let convertedNumbers = words.map(word => {
-    if (!isNaN(word)) {
-      return parseInt(word);
+    const words = word.trim().toLowerCase().split(' ');
+
+    // Check for both numeric and word representation of numbers
+    let convertedNumbers = words.map(word => {
+      if (!isNaN(word)) {
+        return parseInt(word);
+      } else {
+        return numberWords[word] || word; // Use the word as is if not found in the numberWords dictionary
+      }
+    });
+
+    // If there is a single number, return it, otherwise, return the whole array of words
+    if (convertedNumbers.length === 1) {
+      return convertedNumbers[0];
     } else {
-      return numberWords[word] || word; // Use the word as is if not found in the numberWords dictionary
+      const numericValues = convertedNumbers.filter(val => typeof val === 'number');
+      return numericValues.length === 1 ? numericValues[0] : convertedNumbers.join(' ');
     }
-  });
-
-  // If there is a single number, return it, otherwise, return the whole array of words
-  if (convertedNumbers.length === 1) {
-    return convertedNumbers[0];
-  } else {
-    const numericValues = convertedNumbers.filter(val => typeof val === 'number');
-    return numericValues.length === 1 ? numericValues[0] : convertedNumbers.join(' ');
   }
-}
 
-
+  // Headers for API requests with authorization token
   const headers = {
     'Content-Type': 'application/json',
     'Authorization': `Bearer ${token}`
   };
+
+  // Function to check permission and start voice recognition
   const checkPermissionAndStart = async () => {
     const checkPermission = await check(PERMISSIONS.ANDROID.RECORD_AUDIO);
 
     switch (checkPermission) {
       case RESULTS.UNAVAILABLE:
         console.log('This feature is not available (on this device / in this context)');
-        // Informer l'utilisateur que la fonctionnalité n'est pas disponible
+        // Inform the user that the feature is not available
         break;
       case RESULTS.DENIED:
         console.log('The permission has not been requested / is denied but requestable');
@@ -66,7 +73,7 @@ function convertWordToNumber(word) {
         if (requestPermission === RESULTS.GRANTED) {
           startListening();
         } else {
-          // L'utilisateur a refusé l'autorisation, afficher un message expliquant pourquoi l'autorisation est nécessaire
+          // The user has denied the permission, show a message explaining why the permission is required
         }
         break;
       case RESULTS.GRANTED:
@@ -75,135 +82,136 @@ function convertWordToNumber(word) {
         break;
       case RESULTS.BLOCKED:
         console.log('The permission is denied and not requestable anymore');
-        // Si l'autorisation est bloquée, demander à l'utilisateur d'ouvrir les paramètres de l'application et d'autoriser l'accès manuellement
+        // If the permission is blocked, ask the user to open the app settings and allow access manually
         openSettings().catch(() => console.warn('Cannot open settings'));
         break;
     }
   };
 
+  // Define voice recognition commands
   const commands = {
     'supprimer document': () => {
       if (!docdelete.current) {
         docdelete.current = true;
         console.log('Creating activity2 dans command:', docdelete.current);
-    
       }
-
     },
     'supprimer dossier': () => {
       if (!folderdelete.current) {
         folderdelete.current = true;
         console.log('Creating activity2 dans command:', folderdelete.current);
-    
       }
-
     },
-}
+  };
 
-const executeCommand = (command) => {
-  setIsCommandExecuting(true);
-  command();
-  setIsCommandExecuting(false);
-};
-const startListening = async () => {
-  try {
-    setIsListening(true);
-    setTranscription('');
-    await Voice.start('fr-FR'); // pour français
-  } catch (e) {
-    console.error(e);
-  }
-};
+  // Function to execute a voice command
+  const executeCommand = (command) => {
+    setIsCommandExecuting(true);
+    command();
+    setIsCommandExecuting(false);
+  };
 
-const stopListening = async () => {
-  try {
-    setIsListening(false);
-    await Voice.stop();
-  } catch (e) {
-    console.error(e);
-  }
-};
+  // Function to start voice recognition
+  const startListening = async () => {
+    try {
+      setIsListening(true);
+      setTranscription('');
+      await Voice.start('fr-FR'); // for French language (you can change the language code accordingly)
+    } catch (e) {
+      console.error(e);
+    }
+  };
 
-function levenshteinDistance(a, b) {
-  const matrix = [];
+  // Function to stop voice recognition
+  const stopListening = async () => {
+    try {
+      setIsListening(false);
+      await Voice.stop();
+    } catch (e) {
+      console.error(e);
+    }
+  };
 
-  // Increment along the first column of each row
-  for (let i = 0; i <= b.length; i++) {
-    matrix[i] = [i];
-  }
+  // Function to calculate the Levenshtein distance between two strings
+  function levenshteinDistance(a, b) {
+    const matrix = [];
 
-  // Increment each column in the first row
-  for (let j = 0; j <= a.length; j++) {
-    matrix[0][j] = j;
-  }
+    // Increment along the first column of each row
+    for (let i = 0; i <= b.length; i++) {
+      matrix[i] = [i];
+    }
 
-  // Fill in the rest of the matrix
-  for (let i = 1; i <= b.length; i++) {
-    for (let j = 1; j <= a.length; j++) {
-      if (b.charAt(i - 1) == a.charAt(j - 1)) {
-        matrix[i][j] = matrix[i - 1][j - 1];
-      } else {
-        matrix[i][j] = Math.min(matrix[i - 1][j - 1] + 1, Math.min(matrix[i][j - 1] + 1, matrix[i - 1][j] + 1));
+    // Increment each column in the first row
+    for (let j = 0; j <= a.length; j++) {
+      matrix[0][j] = j;
+    }
+
+    // Fill in the rest of the matrix
+    for (let i = 1; i <= b.length; i++) {
+      for (let j = 1; j <= a.length; j++) {
+        if (b.charAt(i - 1) == a.charAt(j - 1)) {
+          matrix[i][j] = matrix[i - 1][j - 1];
+        } else {
+          matrix[i][j] = Math.min(matrix[i - 1][j - 1] + 1, Math.min(matrix[i][j - 1] + 1, matrix[i - 1][j] + 1));
+        }
       }
     }
+
+    return matrix[b.length][a.length];
   }
 
-  return matrix[b.length][a.length];
-}
-
+  // Handle speech results from voice recognition
   Voice.onSpeechResults = (e) => {
     let speech = e.value ? e.value.join(' ') : '';
 
-    // Filtrage du discours
-    speech = speech.trim(); // Supprimer les espaces avant et après
-    speech = speech.replace(/\s+/g, ' '); // Supprimer les espaces multiples
-    speech = speech.toLowerCase(); // Convertir en minuscules pour faciliter la correspondance des commandes
+    // Filter the speech
+    speech = speech.trim(); // Remove leading and trailing spaces
+    speech = speech.replace(/\s+/g, ' '); // Remove multiple spaces
+    speech = speech.toLowerCase(); // Convert to lowercase for easy command matching
 
-    // Garder seulement le premier mot de chaque séquence de mots similaires
+    // Keep only the first word of each similar word sequence
     const words = speech.split(' ');
     const filteredWords = words.filter((word, index, self) => {
-      // Retourner true si le mot est le premier de sa séquence de mots similaires
+      // Return true if the word is the first of its similar word sequence
       return index === self.findIndex(otherWord => levenshteinDistance(word, otherWord) / Math.max(word.length, otherWord.length) <= 0.5);
     });
     speech = filteredWords.join(' ');
-     speech = convertWordToNumber(speech);
-    
-    if (docdelete.current ) {
-      console.log('activitycreating est vrai dans result  :', DocumentIdaudio);
-      console.log('activityCreating2 est vrai dans result');
-      setDocumentIdaudio(speech);
-      console.log('Content  :', DocumentIdaudio);
 
-    }
-    if (folderdelete.current ) {
-      console.log('activitycreating est vrai dans result  :', folderIdaudio);
-      console.log('activityCreating2 est vrai dans result');
-      setfolderIdaudio(speech);
-      console.log('Content  :', folderIdaudio);
+    // Convert spoken words to numbers if applicable (e.g., 'one' to 1)
+    speech = convertWordToNumber(speech);
 
+    // Execute the recognized command if it exists in the commands object
+    const commandFunc = commands[speech];
+    if (commandFunc) {
+      executeCommand(commandFunc);
     }
 
     setTranscription(speech);
 
-
-      const commandFunc = commands[speech];
-      if (commandFunc) {
-        executeCommand(commandFunc);
-      }
-
+    // If document or folder delete action is active, set the audio content of corresponding IDs
+    if (docdelete.current) {
+      setDocumentIdaudio(speech);
+    }
+    if (folderdelete.current) {
+      setfolderIdaudio(speech);
+    }
   };
+
+  // Function to initialize delete action flags and audio content of IDs
   const Initialisation = async () => {
     docdelete.current = false;
     folderdelete.current = false;
     setDocumentIdaudio('');
     setfolderIdaudio('');
+  };
 
-}
-const stopListeningAndResetRefs = () => {
-  stopListening();
-  Initialisation();
-};
+  // Function to stop voice recognition and reset delete action flags and audio content of IDs
+  const stopListeningAndResetRefs = () => {
+    stopListening();
+    Initialisation();
+  };
 
+  // Fetch documents and folders when the component mounts
   useEffect(() => {
     if (!token) {
       navigation.navigate('Login');
@@ -212,13 +220,16 @@ const stopListeningAndResetRefs = () => {
       fetchFolders();
       Voice.destroy().then(Voice.removeAllListeners);
     }
-  }, [token, navigation,docdelete.current,folderdelete.current]);
+  }, [token, navigation, docdelete.current, folderdelete.current]);
+
+  // Clean up voice recognition listeners when the component unmounts
   useEffect(() => {
     return () => {
       Voice.destroy().then(Voice.removeAllListeners);
     };
   }, []);
 
+  // Function to fetch documents from the server
   const fetchDocuments = async () => {
     setIsLoading(true);
     try {
@@ -232,6 +243,7 @@ const stopListeningAndResetRefs = () => {
     }
   };
 
+  // Function to fetch folders from the server
   const fetchFolders = async () => {
     setIsLoading(true);
     try {
@@ -245,11 +257,11 @@ const stopListeningAndResetRefs = () => {
     }
   };
 
-
+  // Function to handle document deletion
   const handleDeleteDocument = async (documentId) => {
     setIsLoading(true);
     try {
-      // Afficher une boîte de dialogue de confirmation
+      // Show a confirmation dialog
       Alert.alert(
         'Confirmation',
         'Are you sure you want to delete this document?',
@@ -278,8 +290,7 @@ const stopListeningAndResetRefs = () => {
               } finally {
                 setIsLoading(false);
               }
-  
-  },
+            },
           },
         ],
         { cancelable: false }
@@ -292,11 +303,11 @@ const stopListeningAndResetRefs = () => {
     }
   };
 
-
+  // Function to handle folder deletion
   const handleDeleteFolder = async (folderId) => {
     setIsLoading(true);
     try {
-      // Afficher une boîte de dialogue de confirmation
+      // Show a confirmation dialog
       Alert.alert(
         'Confirmation',
         'Are you sure you want to delete this folder?',
@@ -337,40 +348,44 @@ const stopListeningAndResetRefs = () => {
       setIsLoading(false);
     }
   };
+
+  // Function to handle document deletion using voice command
   const handleDeleteDocumentaudio = async (documentId) => {
     try {
-                await axios.delete(
-                  `https://q-rious.fr/wp-json/buddyboss/v1/document/${documentId}`,
-                  { headers }
-                );
-                fetchDocuments();
-                Alert.alert('Success', 'Document deleted successfully.');
-              } catch (error) {
-                console.error(error);
-                setError(error);
-                Alert.alert('Error', 'Failed to delete document. Please try again.');
-              } finally {
-                setIsLoading(false);
-              }
+      await axios.delete(
+        `https://q-rious.fr/wp-json/buddyboss/v1/document/${documentId}`,
+        { headers }
+      );
+      fetchDocuments();
+      Alert.alert('Success', 'Document deleted successfully.');
+    } catch (error) {
+      console.error(error);
+      setError(error);
+      Alert.alert('Error', 'Failed to delete document. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
   };
-   const  handleDeleteFolderaudio = async (folderId) => {
+
+  // Function to handle folder deletion using voice command
+  const handleDeleteFolderaudio = async (folderId) => {
     setIsLoading(true);
+    try {
+      await axios.delete(
+        `https://q-rious.fr/wp-json/buddyboss/v1/document/folder/${folderId}`,
+        { headers }
+      );
+      fetchFolders();
+      Alert.alert('Success', 'Folder deleted successfully.');
+    } catch (error) {
+      console.error(error);
+      setError(error);
+      Alert.alert('Error', 'Failed to delete folder. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
   
-              try {
-                await axios.delete(
-                  `https://q-rious.fr/wp-json/buddyboss/v1/document/folder/${folderId}`,
-                  { headers }
-                );
-                fetchFolders();
-                Alert.alert('Success', 'Folder deleted successfully.');
-              } catch (error) {
-                console.error(error);
-                setError(error);
-                Alert.alert('Error', 'Failed to delete folder. Please try again.');
-              } finally {
-                setIsLoading(false);
-              }
-            };
   if(!isAdmin){
     return (
       <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
@@ -407,12 +422,12 @@ const stopListeningAndResetRefs = () => {
 
   return (
     <ScrollView contentContainerStyle={{ flexGrow: 1}}>
-            <Button title="click here to initialize" onPress={() => {
+            <Button title="Initialize before anything" onPress={() => {
   stopListeningAndResetRefs(); // Ajoutez cet appel avant de changer de page
 }} />
 
       <View>
-       <Text style={styles.text}>Dictée vocale</Text>
+       <Text style={styles.text}>command</Text>
       <TouchableOpacity
         style={styles.voiceButton}
         onPress={() => {
@@ -423,21 +438,21 @@ const stopListeningAndResetRefs = () => {
           }
         }}
       >
-         <Text style={styles.voiceButtonText}>{isListening ? 'Arrêter' : 'Démarrer'}</Text>
+         <Text style={styles.voiceButtonText}>{isListening ? 'Stop' : 'Start'}</Text>
       </TouchableOpacity>
       <Text >{transcription}</Text>
      
     
 {docdelete.current && (
   <View>
-    <Text style={styles.transcription}>Veuillez prononcer l'id du document qui doit être Supprimer.</Text>
+    <Text style={styles.transcription}>Id of document delete</Text>
     <Text style={styles.activity}>{DocumentIdaudio}</Text>
     <Button title="Delete document audio" onPress={() => handleDeleteDocumentaudio(DocumentIdaudio)} />
   </View>
 )}
 {folderdelete.current && (
   <View>
-    <Text style={styles.transcription}>Veuillez prononcer l'id du folder qui doit être Supprimer.</Text>
+    <Text style={styles.transcription}>ID of folder delete</Text>
     <Text style={styles.activity}>{folderIdaudio}</Text>
     <Button title="Delete folder audio" onPress={() => handleDeleteFolderaudio(folderIdaudio)} />
     </View>
