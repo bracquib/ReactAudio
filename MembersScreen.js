@@ -159,6 +159,10 @@ function levenshteinDistance(a, b) {
 
   return matrix[b.length][a.length];
 }
+const stopListeningAndResetRefs = () => {
+  stopListening();
+  Initialisation();
+};
 
   Voice.onSpeechResults = (e) => {
     let speech = e.value ? e.value.join(' ') : '';
@@ -279,10 +283,47 @@ useEffect(() => {
     }
   };
 
+  const isAdmin = useSelector((state) => state.isAdmin); // Get the isAdmin flag from Redux state
+  if(!isAdmin){
+    return (
+      <ScrollView>
+      
+      <Text>Members:</Text>
+      {members.map((member) => (
+        <View key={member.id}>
+          <Image source={{ uri: member.avatar_urls.thumb }} style={{ width: 100, height: 100 }} />
+          <Text>ID:{member.id}</Text>
+          <Text>Name: {member.name}</Text>
+          <Text>admin: {member.is_wp_admin ? 'true' : 'false'}</Text>
+          <Image source={{ uri: member.cover_url }} style={{ width: 200, height: 100 }} />
+          
+        </View>
+      ))}
+      <Text>Member Permissions:</Text>
+      <Text>Can create activity: {memberPermissions.can_create_activity ? 'true' : 'false'}</Text>
+      <Text>Can Create group: {memberPermissions.can_create_post ? 'true' : 'false'}</Text>
+      <Text>can_join_group: {memberPermissions.can_join_group ? 'true' : 'false'}</Text>
+      <Text>can_create_media: {memberPermissions.can_create_media ? 'true' : 'false'}</Text>
+      <Text>can_create_forum_media: {memberPermissions.can_create_forum_media ? 'true' : 'false'}</Text>
+      <Text>can_create_message_media: {memberPermissions.can_create_message_media ? 'true' : 'false'}</Text>
+      <Text>can_create_document: {memberPermissions.can_create_document ? 'true' : 'false'}</Text>
+      <Text>can_create_forum_document: {memberPermissions.can_create_forum_document ? 'true' : 'false'}</Text>
+      <Text>can_create_message_document: {memberPermissions.can_create_message_document ? 'true' : 'false'}</Text>
+      <Text>can_create_video: {memberPermissions.can_create_video ? 'true' : 'false'}</Text>
+      <Text>can_create_forum_video: {memberPermissions.can_create_forum_video ? 'true' : 'false'}</Text>
+      <Text>can_create_message_video: {memberPermissions.can_create_message_video ? 'true' : 'false'}</Text>
+        
+    
+    
+    </ScrollView>
+    )
+  }
   return (
     <ScrollView>
-            <Button title="fetch Member" onPress={fetchMembers} />
       <View>
+      <Button title="click here to initialize" onPress={() => {
+  stopListeningAndResetRefs(); // Ajoutez cet appel avant de changer de page
+}} />
        <Text style={styles.text}>Dictée vocale</Text>
       <TouchableOpacity
         style={styles.voiceButton}
@@ -297,9 +338,6 @@ useEffect(() => {
          <Text style={styles.voiceButtonText}>{isListening ? 'Arrêter' : 'Démarrer'}</Text>
       </TouchableOpacity>
       <Text >{transcription}</Text>
-      <TouchableOpacity style={styles.confirmButton} onPress={Initialisation}>
-            <Text style={styles.confirmButtonText}>initialiser</Text>
-          </TouchableOpacity>
 
           {deleteavataraudio.current && (
   <View>

@@ -316,7 +316,7 @@ const deleteGroup = async (groupId) => {
 
   
 
-  const styles = {
+  const styles = StyleSheet.create({
     boldText: {
       fontWeight: 'bold',
     },
@@ -328,11 +328,125 @@ const deleteGroup = async (groupId) => {
       width: 200,
       height: 100,
     },
-  };
+    container: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    button: {
+      position: 'absolute',
+      backgroundColor: '#007AFF',
+      padding: 10,
+      borderRadius: 5,
+    },
+    buttonText: {
+      color: '#FFF',
+      fontSize: 18,
+    },
+    voiceButton: {
+      backgroundColor: '#007AFF',
+      padding: 10,
+      borderRadius: 5,
+      marginBottom: 20,
+    },
+    voiceButtonText: {
+      color: '#FFF',
+      fontSize: 18,
+    },
+    text: {
+      textAlign: 'center',
+      color: '#333333',
+      marginBottom: 5,
+    },
+    transcription: {
+      textAlign: 'center',
+      color: '#333333',
+      marginBottom: 5,
+      fontSize: 18,
+    },
+    activity: {
+      textAlign: 'center',
+      color: '#333333',
+      marginBottom: 5,
+      fontSize: 18,
+    },
+    itemContainer: {
+      borderWidth: 1,
+      borderColor: 'gray',
+      padding: 10,
+      marginBottom: 20,
+    },
+  });
+  const isAdmin = useSelector(state => state.isAdmin);
+
+  if(!isAdmin){
+    return (
+      <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
+           <View>
+             <Text>Groupes:</Text>
+             {groupes.map((groupe) => (
+               <View key={groupe.id}>
+                 <Text style={styles.boldText}>Name: {groupe.name}</Text>
+                 <Text>ID: {groupe.id}</Text>
+                 <Text>Link: {groupe.link}</Text>
+                 <Text>Members Count: {groupe.members_count}</Text>
+     
+     
+     
+                 {/* Afficher l'image de l'avatar */}
+                 <Image source={{ uri: groupe.avatar_urls.thumb }} style={styles.avatarImage} />
+     
+                 {/* Afficher l'image de la couverture */}
+                 <Image source={{ uri: groupe.cover_url }} style={styles.coverImage} />
+     
+                 {/* Afficher les détails des onglets */}
+                 <Text>Details:</Text>
+                 {groupe.details.map((tab) => (
+                   <View key={tab.id} style={{ marginLeft: 20 }}>
+                     <Text style={styles.boldText}>Title: {tab.title}</Text>
+                     <Text>Count: {tab.count}</Text>
+                     <Text>Link: {tab.link}</Text>
+                     {/* Affichez d'autres détails de l'onglet ici */}
+                   </View>
+                 ))}
+     
+                 {/* Afficher les paramètres du groupe */}
+                 <Text>Group Settings:</Text>
+                 {groupSettings[groupe.id] && groupSettings[groupe.id].map((setting) => (
+                   <View key={setting.name} style={{ marginLeft: 20 }}>
+                     <Text style={styles.boldText}>Label: {setting.label}</Text>
+                     <Text>Name: {setting.name}</Text>
+                     <Text>Description: {setting.description}</Text>
+                     <Text>Type: {setting.type}</Text>
+                     <Text>Value: {setting.value}</Text>
+                     {/* Affichez d'autres détails du paramètre ici */}
+                   </View>
+                 ))}
+     
+                 {/* Afficher les membres du groupe */}
+                 <Text>Members:</Text>
+               {membres[groupe.id] ? (
+                 membres[groupe.id].map((membre) => (
+                   <View key={membre.id} style={{ marginLeft: 20 }}>
+                     <Text style={styles.boldText}>ID: {membre.id}</Text>
+                     <Text>Name: {membre.name}</Text>
+                     <Text>Login: {membre.user_login}</Text>
+                     {/* Affichez d'autres détails du membre ici */}
+                   </View>
+                 ))
+               ) : (
+                 <Text>Loading members...</Text>
+               )}
+               </View>
+             ))}
+           </View>
+         </ScrollView>
+    )
+  }
 
   return (
-    <ScrollView contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', alignItems: 'center' }}>
- <Button title="Go to Another Page" onPress={() => {
+    <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
+ <Button title="click here to initialize" onPress={() => {
   stopListeningAndResetRefs(); // Ajoutez cet appel avant de changer de page
 }} />
       <View>
@@ -350,9 +464,7 @@ const deleteGroup = async (groupId) => {
          <Text style={styles.voiceButtonText}>{isListening ? 'Arrêter' : 'Démarrer'}</Text>
       </TouchableOpacity>
       <Text >{transcription}</Text>
-      <TouchableOpacity style={styles.confirmButton} onPress={Initialisation}>
-            <Text style={styles.confirmButtonText}>initialiser</Text>
-          </TouchableOpacity>
+  
           {deletegroup.current && (
   <View>
     <Text style={styles.transcription}>Veuillez prononcer l'id du groupe qui doit être Supprimer.</Text>

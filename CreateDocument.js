@@ -11,6 +11,7 @@ const CreateDocuments = ({ navigation }) => {
   const [error, setError] = useState(null);
   const [isCommandExecuting, setIsCommandExecuting] = useState(false);
   const token = useSelector(state => state.token);
+  const isAdmin = useSelector(state => state.isAdmin);
   const [isListening, setIsListening] = useState(false);
   const [transcription, setTranscription] = useState('');
 
@@ -370,13 +371,43 @@ const stopListeningAndResetRefs = () => {
                 setIsLoading(false);
               }
             };
-  
+  if(!isAdmin){
+    return (
+      <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
+     
+<View>
+  <Text>Documents:</Text>
+  {documents.map((document, index) => (
+    <View key={index} style={{ marginBottom: 10 }}>
+      <Text>ID: {document.id}</Text> 
+      <Text>Title: {document.title}</Text>
+      <Text>Activity ID: {document.activity_id}</Text>
+      <Text>Group Name: {document.group_name}</Text>
+      <Text>Download URL: {document.download_url}</Text>
+                </View>
+  ))}
+</View>
+<View>
+  <Text>Folders:</Text>
+  {folders.map((folder, index) => (
+    <View key={index} style={{ marginBottom: 10 }}>
+      <Text>ID: {folder.id}</Text>
+      <Text>Title: {folder.title}</Text>
+      <Text>Document URL: {folder.download_url}</Text>
+      <Text>User Nicename: {folder.user_nicename}</Text>
+    </View>
+  ))}
+</View>
+
+
+</ScrollView>
+    );
+  }
           
 
   return (
-    <ScrollView contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', alignItems: 'center' }}>
-            <Button title="fetch folder" onPress={fetchFolders} />
-            <Button title="Go to Another Page" onPress={() => {
+    <ScrollView contentContainerStyle={{ flexGrow: 1}}>
+            <Button title="click here to initialize" onPress={() => {
   stopListeningAndResetRefs(); // Ajoutez cet appel avant de changer de page
 }} />
 
@@ -395,9 +426,7 @@ const stopListeningAndResetRefs = () => {
          <Text style={styles.voiceButtonText}>{isListening ? 'Arrêter' : 'Démarrer'}</Text>
       </TouchableOpacity>
       <Text >{transcription}</Text>
-      <TouchableOpacity style={styles.confirmButton} onPress={Initialisation}>
-            <Text style={styles.confirmButtonText}>initialiser</Text>
-          </TouchableOpacity>
+     
     
 {docdelete.current && (
   <View>

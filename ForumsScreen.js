@@ -247,16 +247,76 @@ const [updatedContent, setUpdatedContent] = useState('');
     fetchReplies();
   }, []);
 
-  if (isLoading) {
-    return <Text>Loading...</Text>;
-  }
 
-  if (error) {
-    return <Text>Error: {error.message}</Text>;
+  const isAdmin = useSelector(state => state.isAdmin);
+
+  if(!isAdmin){
+    return (
+      <ScrollView contentContainerStyle={{ flexGrow: 1}}>
+        <Text>Forums:</Text>
+        {forums.map((forum) => (
+          <View key={forum.id}>
+            <Text style={styles.boldText}>ID: {forum.id}</Text>
+            <Text>Title: {forum.title.raw}</Text>
+            <Text>Content: {forum.content.raw}</Text>
+            <Text>Link: {forum.link}</Text>
+            <Text>Author: {forum.author}</Text>
+            <Text>Status: {forum.status}</Text>
+           
+            <Text>Topics:</Text>
+            {topics.map((topic) => {
+              if (topic.forum_id === forum.id) {
+                const topicReplies = replies.filter(reply => reply.parent === topic.id);
+                const lastReply = topicReplies.length > 0 ? topicReplies[topicReplies.length - 1] : null;
+                return (
+                  <View key={topic.id} style={{ marginLeft: 20, marginBottom: 10 }}>
+                    <Text style={styles.boldText}>ID: {topic.id}</Text>
+                    <Text>topic Actions States: {JSON.stringify(topic.action_states)}</Text>
+                    <Text>Title: {topic.title.raw}</Text>
+                    <Text>Content: {topic.content.raw}</Text>
+                    <Text>Link: {topic.link}</Text>
+                    <Text>Author: {topic.author}</Text>
+                    <Text>Status: {topic.status}</Text>
+                    <Text>Topic Tags: {topic.topic_tags}</Text>
+                   
+
+                    <Text>Replies:</Text>
+                    {topicReplies.map((reply) => (
+  <View key={reply.id} style={{ marginLeft: 40 }}>
+    <Text style={styles.boldText}>ID: {reply.id}</Text>
+    <Text>Reply Actions States: {JSON.stringify(reply.action_states)}</Text>
+    <Text>Date: {reply.date}</Text>
+    <Text>Content: {reply.content.raw}</Text>
+    <Text>Link: {reply.link}</Text>
+    <Text>Author: {reply.author}</Text>
+    <Text>Status: {reply.status}</Text>
+    <Text>Title: {reply.title.raw}</Text>
+    <Text>Reply To: {reply.reply_to}</Text>
+    <Text>Forum ID: {reply.forum_id}</Text>
+    <Text>Tags: {reply.tags}</Text>
+    <Text>Subscribe: {reply.subscribe ? 'true' : 'false'}</Text>
+    <Text>BBP Media: {reply.bbp_media}</Text>
+    <Text>BBP Media GIF: {reply.bbp_media_gif}</Text>
+    
+      
+  </View>
+))}
+
+
+                    
+                  </View>
+                );
+              }
+            })}
+          </View>
+        ))}
+
+    </ScrollView>
+    )
   }
 
   return (
-    <ScrollView contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', alignItems: 'center' }}>
+    <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
       <View>
         <Text>Forums:</Text>
         {forums.map((forum) => (
@@ -433,6 +493,7 @@ const [updatedContent, setUpdatedContent] = useState('');
     </ScrollView>
   );
 };
+
 
 const styles = {
   boldText: {

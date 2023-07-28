@@ -1,6 +1,6 @@
 // CreateActivityScreen.js
 import React, { useEffect, useRef, useState } from 'react';
-import { View, FlatList, Text, Button, TextInput, ActivityIndicator, Alert,SafeAreaView ,StyleSheet,TouchableOpacity} from 'react-native';
+import { View, FlatList, Text, Button, TextInput, ActivityIndicator, Alert,SafeAreaView ,StyleSheet,TouchableOpacity, ScrollView} from 'react-native';
 import { useSelector } from 'react-redux';
 import axios from 'axios';
 import { check, PERMISSIONS, RESULTS, request, openSettings } from 'react-native-permissions';
@@ -417,7 +417,7 @@ const handleUpdateActivity = async (activityId) => {
 
 if(!isAdmin){
   return (
-    <SafeAreaView style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+    <ScrollView style={{ flex: 1}}>
     <View>
     <TextInput
       style={{ height: 40, borderColor: 'gray', borderWidth: 1 }}
@@ -444,9 +444,7 @@ stopListeningAndResetRefs(); // Ajoutez cet appel avant de changer de page
       <Text style={styles.voiceButtonText}>{isListening ? 'Arrêter' : 'Démarrer'}</Text>
     </TouchableOpacity>
     <Text >{transcription}</Text>
-    <TouchableOpacity style={styles.confirmButton} onPress={Initialisation}>
-          <Text style={styles.confirmButtonText}>initialiser</Text>
-        </TouchableOpacity>
+
         {activityCreatingRef.current && (
 <View>
   <Text style={styles.transcription}>Veuillez prononcer le contenu de l'activité.</Text>
@@ -473,8 +471,8 @@ stopListeningAndResetRefs(); // Ajoutez cet appel avant de changer de page
       data={data}
       keyExtractor={(item) => item.id.toString()}
       renderItem={({ item }) => (
-        <View style={{ marginBottom: 20 }}>
-          <Text>User: {item.name}</Text>
+        <View style={styles.itemContainer}> 
+        <Text>User: {item.name}</Text>
           <Text>ID activity: {item.id}</Text>
           <Text>{item.content.rendered}</Text>
           <Text>Documents:</Text>
@@ -504,19 +502,18 @@ stopListeningAndResetRefs(); // Ajoutez cet appel avant de changer de page
               </View>
             )}
           />
-                <Button title="Delete Activity" onPress={() => handleDeleteActivity(item.id)} />
                
         </View>
         
       )}
     />
-  </SafeAreaView>
+  </ScrollView>
 );
 };
     
 
   return (
-    <SafeAreaView style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+    <ScrollView style={{ flex: 1 }}>
       <View>
       <TextInput
         style={{ height: 40, borderColor: 'gray', borderWidth: 1 }}
@@ -525,7 +522,7 @@ stopListeningAndResetRefs(); // Ajoutez cet appel avant de changer de page
         placeholder="New post content"
       />
       <Button title="Create activity" onPress={handleCreatePost} />
-      <Button title="Go to Another Page" onPress={() => {
+      <Button title="click here to initialize" onPress={() => {
   stopListeningAndResetRefs(); // Ajoutez cet appel avant de changer de page
 }} />
 
@@ -543,9 +540,6 @@ stopListeningAndResetRefs(); // Ajoutez cet appel avant de changer de page
         <Text style={styles.voiceButtonText}>{isListening ? 'Arrêter' : 'Démarrer'}</Text>
       </TouchableOpacity>
       <Text >{transcription}</Text>
-      <TouchableOpacity style={styles.confirmButton} onPress={Initialisation}>
-            <Text style={styles.confirmButtonText}>initialiser</Text>
-          </TouchableOpacity>
           {activityCreatingRef.current && (
   <View>
     <Text style={styles.transcription}>Veuillez prononcer le contenu de l'activité.</Text>
@@ -578,7 +572,7 @@ stopListeningAndResetRefs(); // Ajoutez cet appel avant de changer de page
         data={data}
         keyExtractor={(item) => item.id.toString()}
         renderItem={({ item }) => (
-          <View style={{ marginBottom: 20 }}>
+          <View style={styles.itemContainer}> 
             <Text>User: {item.name}</Text>
             <Text>ID activity: {item.id}</Text>
             <Text>{item.content.rendered}</Text>
@@ -631,7 +625,7 @@ stopListeningAndResetRefs(); // Ajoutez cet appel avant de changer de page
           
         )}
       />
-    </SafeAreaView>
+    </ScrollView>
   );
 };
 
@@ -678,6 +672,12 @@ const styles = StyleSheet.create({
     color: '#333333',
     marginBottom: 5,
     fontSize: 18,
+  },
+  itemContainer: {
+    borderWidth: 1,
+    borderColor: 'gray',
+    padding: 10,
+    marginBottom: 20,
   },
 });
 

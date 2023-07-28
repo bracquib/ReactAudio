@@ -226,11 +226,39 @@ useEffect(() => {
       console.error(error);
     }
   };
+
+
+  const isAdmin = useSelector((state) => state.isAdmin); // Get the isAdmin flag from Redux state
+
+  if(!isAdmin){
+    return (
+      <View>
+
+      <Text>Reported Members:</Text>
+      {reportedMembers.map((member) => (
+        <View key={member.id}>
+          <Image source={{ uri: member.avatar_urls.thumb }} style={{ width: 100, height: 100 }} />
+          <Text>Name: {member.name}</Text>
+          <Text>Email: {member.user_email}</Text>
+        </View>
+      ))}
+
+      <TextInput
+        placeholder="Enter Member ID"
+        value={memberidaudio}
+        onChangeText={setMemberId}
+        style={{ borderWidth: 1, borderColor: 'gray', padding: 5, marginVertical: 10 }}
+      />
+
+      <Button title="Report Member" onPress={handleReportMember} />
+    </View>
+    )
+  }
   return (
     <View>
       <View>
         <Text style={styles.text}>Dictée vocale</Text>
-        <Button title="Go to Another Page" onPress={() => {
+        <Button title="click here to initialize" onPress={() => {
   stopListeningAndResetRefs(); // Ajoutez cet appel avant de changer de page
 }} />
       <TouchableOpacity
@@ -246,15 +274,13 @@ useEffect(() => {
          <Text style={styles.voiceButtonText}>{isListening ? 'Arrêter' : 'Démarrer'}</Text>
       </TouchableOpacity>
       <Text >{transcription}</Text>
-      <TouchableOpacity style={styles.confirmButton} onPress={Initialisation}>
-            <Text style={styles.confirmButtonText}>initialiser</Text>
-          </TouchableOpacity>
+
 
           {reportmemberref.current && (
   <View>
     <Text style={styles.transcription}>Veuillez prononcer l'id du member qui doit être report.</Text>
     <Text style={styles.activity}>{memberidaudio}</Text>
-    <Button title="Delete Activity audio" onPress={() => handleReportMember} />
+    <Button title="report member audio" onPress={() => handleReportMember} />
   </View>
 )}
 </View>

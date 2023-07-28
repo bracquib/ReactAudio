@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, Button, TextInput, Alert, ScrollView, Image } from 'react-native';
+import { View, Text, Button, TextInput, Alert, ScrollView, Image ,StyleSheet} from 'react-native';
 import { useSelector } from 'react-redux';
 import axios from 'axios';
 
@@ -89,6 +89,45 @@ const MentionsAndComponentsScreen = ({ navigation }) => {
   const handleUpdateComponent = () => {
     updateComponent();
   };
+  const isAdmin = useSelector((state) => state.isAdmin); // Get the isAdmin flag from Redux state
+
+  if(!isAdmin){
+    return (
+      <ScrollView contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', alignItems: 'center' }}>
+      <View>
+      <TextInput 
+          style={{ height: 40, borderColor: 'gray', borderWidth: 1, marginBottom: 20, paddingHorizontal: 10 }}
+          placeholder="Enter term"
+          onChangeText={text => setTerm(text)}
+          value={term}
+        />
+      <Button title="Search Mentions" onPress={handleSearchMentions} />
+
+      <Text>Your mentions:</Text>
+{mentions.map((mention, index) => (
+  <View key={index}>
+    <Text>ID: {mention.id}</Text>
+    <Text>Display ID: {mention.display_id}</Text>
+    <Text>Name: {mention.name}</Text>
+    <Image source={{ uri: mention.image }} style={{ width: 50, height: 50 }} />
+  </View>
+))}
+
+
+        <Text>Components:</Text>
+        {components.map((component, index) => (
+          <View key={index} style={styles.itemContainer}> 
+
+            <Text>Name:{component.name}</Text>
+            <Text>Title: {component.title}</Text>
+            <Text>Description: {component.description}</Text>
+            <Text>Status: {component.status}</Text>
+          </View>
+        ))}
+      </View>
+    </ScrollView>
+    )
+  }
 
   return (
     <ScrollView contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', alignItems: 'center' }}>
@@ -114,7 +153,7 @@ const MentionsAndComponentsScreen = ({ navigation }) => {
 
         <Text>Components:</Text>
         {components.map((component, index) => (
-          <View key={index} style={{ marginBottom: 10 }}>
+          <View key={index} style={styles.itemContainer}> 
             <Text>Name:{component.name}</Text>
             <Text>Title: {component.title}</Text>
             <Text>Description: {component.description}</Text>
@@ -140,3 +179,53 @@ const MentionsAndComponentsScreen = ({ navigation }) => {
 };
 
 export default MentionsAndComponentsScreen;
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  button: {
+    position: 'absolute',
+    backgroundColor: '#007AFF',
+    padding: 10,
+    borderRadius: 5,
+  },
+  buttonText: {
+    color: '#FFF',
+    fontSize: 18,
+  },
+  voiceButton: {
+    backgroundColor: '#007AFF',
+    padding: 10,
+    borderRadius: 5,
+    marginBottom: 20,
+  },
+  voiceButtonText: {
+    color: '#FFF',
+    fontSize: 18,
+  },
+  text: {
+    textAlign: 'center',
+    color: '#333333',
+    marginBottom: 5,
+  },
+  transcription: {
+    textAlign: 'center',
+    color: '#333333',
+    marginBottom: 5,
+    fontSize: 18,
+  },
+  activity: {
+    textAlign: 'center',
+    color: '#333333',
+    marginBottom: 5,
+    fontSize: 18,
+  },
+  itemContainer: {
+    borderWidth: 1,
+    borderColor: 'gray',
+    padding: 10,
+    marginBottom: 20,
+  },
+});

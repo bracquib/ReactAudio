@@ -355,14 +355,38 @@ const stopListeningAndResetRefs = () => {
   }
 };
 
+if(!isAdmin){
+  return (
+    <ScrollView contentContainerStyle={{ flexGrow: 1}}>  
+       <Text>Albums:</Text>
+        {albums.map((album) => (
+          <View key={album.id}>
+            <Text>ID: {album.id}</Text>
+            <Text>Title: {album.title}</Text>
+          </View>
+        ))}
+  
+        <Text>Photos:</Text>
+        {photos.map((photo) => (
+          <View key={photo.id}>
+            <Text>ID: {photo.id}</Text>
+            <Text>Title: {photo.title}</Text>
+            <Image source={{ uri: photo.attachment_data.thumb }} style={{ width: 200, height: 200 }} />
+          </View>
+        ))}
+  
+           </ScrollView>
+  )
+}
 
 
   return (
-    <ScrollView contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', alignItems: 'center' }}>
-  <Button title="Go to Another Page" onPress={() => {
+    <ScrollView contentContainerStyle={{ flexGrow: 1}}>
+  <Button title="click here to initialize" onPress={() => {
   stopListeningAndResetRefs(); // Ajoutez cet appel avant de changer de page
 }} />
-<Text style={styles.text}>Dictée vocale</Text>
+      <View>
+       <Text style={styles.text}>Dictée vocale</Text>
       <TouchableOpacity
         style={styles.voiceButton}
         onPress={() => {
@@ -376,9 +400,7 @@ const stopListeningAndResetRefs = () => {
          <Text style={styles.voiceButtonText}>{isListening ? 'Arrêter' : 'Démarrer'}</Text>
       </TouchableOpacity>
       <Text >{transcription}</Text>
-      <TouchableOpacity style={styles.confirmButton} onPress={Initialisation}>
-            <Text style={styles.confirmButtonText}>initialiser</Text>
-          </TouchableOpacity>
+
           {albumCreatingRef.current && (
   <View>
     <Text style={styles.transcription}>Veuillez prononcer le titre du album.</Text>
@@ -444,7 +466,7 @@ const stopListeningAndResetRefs = () => {
           <Image source={{ uri: photo.attachment_data.thumb }} style={{ width: 200, height: 200 }} />
         </View>
       ))}
-
+  </View>
          </ScrollView>
   );
 };

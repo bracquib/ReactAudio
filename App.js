@@ -22,7 +22,6 @@ const BottomTabNavigator = () => {
   return (
     <Tab.Navigator>
       <Tab.Screen name="Help" component={Help} />
-      <Tab.Screen name="Audio" component={Audio} />
       <Tab.Screen name="CreateActivity" component={CreateActivityScreen} />
       <Tab.Screen name="MentionsAndComponents" component={MentionsAndComponentsScreen} />
       <Tab.Screen name="CreateDocuments" component={CreateDocuments} />

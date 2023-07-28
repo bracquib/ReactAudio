@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Alert, Button, TextInput, View } from 'react-native';
+import { Alert, Button, TextInput, View ,Text} from 'react-native';
 import { useDispatch } from 'react-redux';
 import axios from 'axios';
 import { useNavigation } from '@react-navigation/native';
@@ -48,14 +48,15 @@ export default function LoginScreen({ navigation }) {
   };
 
   return (
-    <View style={{ flex: 1, justifyContent: 'center', paddingHorizontal: 20 }}>
+    <View style={{ flex: 1, justifyContent: 'flex-start', alignItems: 'center', paddingTop: 100, backgroundColor: 'white' }}>
+      <Text style={{ color: 'black', fontSize: 24, marginBottom: 200 }}>WeSingleParent</Text>
       <TextInput 
-        style={{ height: 40, borderColor: 'gray', borderWidth: 1, marginBottom: 20, paddingHorizontal: 10 }} 
+        style={{ height: 40, borderColor: 'gray', borderWidth: 1, marginBottom: 20, paddingHorizontal: 10, backgroundColor: 'white', width: '100%' }} 
         placeholder="Username" 
         onChangeText={text => setUsername(text)} 
       />
       <TextInput 
-        style={{ height: 40, borderColor: 'gray', borderWidth: 1, marginBottom: 20, paddingHorizontal: 10 }} 
+        style={{ height: 40, borderColor: 'gray', borderWidth: 1, marginBottom: 20, paddingHorizontal: 10, backgroundColor: 'white', width: '100%' }} 
         placeholder="Password" 
         onChangeText={text => setPassword(text)} 
         secureTextEntry 
@@ -63,4 +64,5 @@ export default function LoginScreen({ navigation }) {
       <Button title="Log in" onPress={login} />
     </View>
   );
+  
 }
