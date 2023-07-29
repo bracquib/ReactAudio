@@ -22,3 +22,5 @@ Ensure that you have set up the development environment and emulator correctly b
 ## If you make modification:
 - npm res ..
 - start with android studio
+
+For more information,see documentation.md
